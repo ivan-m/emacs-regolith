@@ -1,0 +1,54 @@
+;;;
+;;;  ██████████                                               ███████████                              ████   ███   █████    █████
+;;; ░░███░░░░░█                                              ░░███░░░░░███                            ░░███  ░░░   ░░███    ░░███
+;;;  ░███  █ ░  █████████████    ██████    ██████   █████     ░███    ░███   ██████   ███████  ██████  ░███  ████  ███████   ░███████
+;;;  ░██████   ░░███░░███░░███  ░░░░░███  ███░░███ ███░░      ░██████████   ███░░███ ███░░███ ███░░███ ░███ ░░███ ░░░███░    ░███░░███
+;;;  ░███░░█    ░███ ░███ ░███   ███████ ░███ ░░░ ░░█████     ░███░░░░░███ ░███████ ░███ ░███░███ ░███ ░███  ░███   ░███     ░███ ░███
+;;;  ░███ ░   █ ░███ ░███ ░███  ███░░███ ░███  ███ ░░░░███    ░███    ░███ ░███░░░  ░███ ░███░███ ░███ ░███  ░███   ░███ ███ ░███ ░███
+;;;  ██████████ █████░███ █████░░████████░░██████  ██████     █████   █████░░██████ ░░███████░░██████  █████ █████  ░░█████  ████ █████
+;;; ░░░░░░░░░░ ░░░░░ ░░░ ░░░░░  ░░░░░░░░  ░░░░░░  ░░░░░░     ░░░░░   ░░░░░  ░░░░░░   ░░░░░███ ░░░░░░  ░░░░░ ░░░░░    ░░░░░  ░░░░ ░░░░░
+;;;                                                                                  ███ ░███
+;;;                                                                                 ░░██████
+;;;                                                                                  ░░░░░░
+
+;;; Guardrail
+
+(when (< emacs-major-version 30)
+  (error "Emacs Regolith only works with Emacs 30 and newer; you have version %s" emacs-major-version))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;;   Basic settings for quick startup and convenience
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Startup speed, annoyance suppression
+(setq bedrock--initial-gc-threshold gc-cons-threshold)
+(setq gc-cons-threshold 10000000)
+(setq byte-compile-warnings '(not obsolete))
+(setq warning-suppress-log-types '((comp) (bytecomp)))
+(setq native-comp-async-report-warnings-errors 'silent)
+
+(setq toggle-debug-on-error t)
+
+;; Silence stupid startup message
+(setq inhibit-startup-echo-area-message (user-login-name))
+
+;; Default frame configuration: full screen, good-looking title bar on macOS
+(setq frame-resize-pixelwise t)
+(tool-bar-mode -1)                      ; All these tools are in the menu-bar anyway
+(setq default-frame-alist '((fullscreen . maximized)
+
+                            ;; You can turn off scroll bars by uncommenting these lines:
+                            ;; (vertical-scroll-bars . nil)
+                            ;; (horizontal-scroll-bars . nil)
+
+                            ;; Setting the face in here prevents flashes of
+                            ;; color as the theme gets activated
+                            (background-color . "#000000")
+                            (foreground-color . "#ffffff")
+                            (ns-appearance . dark)
+                            (ns-transparent-titlebar . t)))
+
+;; Needs to be defined before use-package is loaded.
+(setq use-package-enable-imenu-support t)
