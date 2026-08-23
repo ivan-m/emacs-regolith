@@ -490,23 +490,109 @@ get activated now making it read-only."
 
   (advice-add 'restclient-jq-interactive-result :around #'my/restclient-jq-inhibit-read-only))
 
-(use-package company-restclient
+;; company-restclient is not amenable to wrapping by
+;; cape-company-to-capf, so we create our own completion-at-point
+;; function using cape.
+;;
+;; TODO: content type header values and variable names (latter
+;; semi-covered by dabbrev).
+(use-package know-your-http-well
   :ensure t
-  :after
-  restclient
-  cape
   :config
-  (defun my/cape-restclient-setup-capf ()
-    (add-hook 'completion-at-point-functions (cape-company-to-capf #'company-restclient) nil 'local))
+  (defun mantle-http--get-notes (cand alist)
+    "Extract documentation list for CAND from ALIST using case-insensitive match."
+    (cadr (assoc-string cand alist t)))
+
+  (defun mantle-http--adjust-case (typed inserted)
+    "Adjust INSERTED string to match the case style of TYPED."
+    (cond
+     ((string-equal typed (upcase typed))
+      (upcase inserted))
+     ((string-equal typed (capitalize typed))
+      (capitalize inserted))
+     (t (downcase inserted))))
+
+  (defun mantle-http--make-completion-table (alist typed)
+    "Return a completion table for ALIST with candidates formatted to match TYPED casing."
+    (let ((cands (mapcar (lambda (key) (mantle-http--adjust-case typed key))
+                         (mapcar #'car alist))))
+      (lambda (string pred action)
+        (let ((completion-ignore-case t))
+          (if (eq action 'metadata)
+              `(metadata
+                (category . http-well)
+                (annotation-function
+                 . ,(lambda (cand)
+                      (when-let ((notes (mantle-http--get-notes cand alist)))
+                        (concat " — " (car notes))))))
+            (complete-with-action action cands string pred))))))
+
+  (defun mantle-http--make-capf (alist-var kind prefix-re interactive)
+    "Return or invoke a Capf for ALIST-VAR with KIND annotation and PREFIX-RE filter."
+    (let ((capf (lambda ()
+                  (when (or (not prefix-re)
+                            (looking-back prefix-re (line-beginning-position)))
+                    (let* ((bounds (or (bounds-of-thing-at-point 'symbol)
+                                       (cons (point) (point))))
+                           (start (car bounds))
+                           (end (cdr bounds))
+                           (typed (buffer-substring-no-properties start end))
+                           (alist (symbol-value alist-var)))
+                      (list start end
+                            (mantle-http--make-completion-table alist typed)
+                            :exclusive 'no
+                            :company-kind (lambda (_) kind)
+                            :company-doc-buffer
+                            (lambda (cand)
+                              (when-let ((notes (mantle-http--get-notes cand alist)))
+                                (with-current-buffer (get-buffer-create " *mantle-http-doc*")
+                                  (erase-buffer)
+                                  (insert (string-join notes "\n\n"))
+                                  (current-buffer))))))))))
+      (if interactive
+          (cape-interactive capf)
+        (funcall capf))))
+
+  (defun mantle-http-headers-capf (&optional interactive)
+    "Capf for HTTP headers."
+    (interactive (list t))
+    (mantle-http--make-capf 'http-headers 'property "^[a-zA-Z0-9-]*$" interactive))
+
+  (defun mantle-http-methods-capf (&optional interactive)
+    "Capf for HTTP methods."
+    (interactive (list t))
+    (mantle-http--make-capf 'http-methods 'function "^[a-zA-Z]*$" interactive))
+
+  (defun mantle-http-status-capf (&optional interactive)
+    "Capf for HTTP status codes."
+    (interactive (list t))
+    (mantle-http--make-capf 'http-status 'enum-member "^[0-9]*$" interactive))
+
+  ;; Combined super Capf strictly for know-your-http-well
+  (defalias 'mantle-http-super-capf
+    (cape-capf-super
+     #'mantle-http-headers-capf
+     #'mantle-http-methods-capf
+     #'mantle-http-status-capf))
+
+  (defun mantle-http-setup-completion ()
+    "Setup HTTP completion at point for restclient-mode buffers."
+    (add-hook 'completion-at-point-functions
+              #'mantle-http-super-capf nil t))
+
+  (transient-append-suffix 'regolith-mantle '(-1)
+    '["HTTP & Web"
+     ("H" "HTTP Headers" mantle-http-headers-capf)
+     ("M" "HTTP Methods" mantle-http-methods-capf)
+     ("S" "HTTP Status Codes" mantle-http-status-capf)])
+
   :hook
-  (restclient-mode . my/cape-restclient-setup-capf))
+  (restclient-mode . mantle-http-setup-completion))
 
 ;; See also the counsel-jq package; the restclient jq support is
 ;; probably similar enough I don't need it though.
 
 ;; jq-format might be usefil with the reformatter package
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
