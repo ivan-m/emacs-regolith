@@ -215,6 +215,12 @@
   :config
   (corfu-terminal-mode))
 
+(use-package transient
+  :ensure nil
+  :custom
+  ;; Prevent Transient from reading or writing to the magic state file
+  (transient-values-file nil))
+
 ;; Fancy completion-at-point functions; there's too much in the cape package to
 ;; configure here; dive in when you're comfortable!
 (use-package cape

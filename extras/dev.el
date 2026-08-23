@@ -210,40 +210,51 @@
 ;; Magit: best Git client to ever exist
 (use-package magit
   :ensure t
+
+  :init
+  (magit-auto-revert-mode +1)
+
   :custom
+  ;; We should only pick one of global and magit-specific auto revert.
+  (magit-auto-revert-mode (not global-auto-revert-mode))
+  (auto-revert-buffer-list-filter 'magit-auto-revert-repository-buffer-p)
   (magit-delete-by-moving-to-trash nil)
   (magit-diff-refine-hunk t)
-
-  ;; Save modified buffers visiting files in the repo before actions like push/commit.
-  ;; Set to t to save without asking, 'dontask or nil are other common choices.
   (magit-save-repository-buffers nil)
 
-  (magit-section-initial-visibility
+  ;; Defaults seem to be from 'magit-module-sections-hook'
+  (magit-section-initial-visibility-alist
    '((untracked . show)
      (unstaged . show)
      (staged . show)
-     (stashes . hide)
+     (stashes . show)
+     (unpushed . show)
      (unpulled . show)))
+
+  :config
+  ;; Safely update specific values without overwriting the rest of the list
+  (dolist (val '((magit-fetch "--prune" "--all")
+                 (magit-cherry-pick "-x")
+                 (magit-push "--follow-tags")))
+    (setq transient-values (assq-delete-all (car val) transient-values))
+    (push val transient-values))
 
   :bind (("C-x g" . magit-status)))
 
-(use-package transient
-  :ensure t
-  :after magit
-  :custom
-  (transient-values
-   '((magit-fetch "--prune" "--all")
-		 (magit-cherry-pick "-x")
-		 (magit-push "--follow-tags"))))
-
-;; Configure magit-filenotify with use-package, adding hooks as required
-(use-package magit-filenotify
-  :ensure t
+(use-package magit
   :if (system-type-is-gnu)
-  :after magit
+
+  :preface
+  (defun my/magit-refresh-local-status-on-save ()
+    "Refresh the `magit-status' buffer when a local file is saved.
+This function safely ignores remote files handled via TRAMP to
+prevent network latency issues."
+    (when (and (fboundp 'magit-after-save-refresh-status)
+               (not (file-remote-p (or buffer-file-name default-directory))))
+      (magit-after-save-refresh-status)))
+
   :hook
-  ;; Ensure it's notified by adding a hook
-  (magit-status-mode-hook magit-filenotify-mode))
+  (after-save . my/magit-refresh-local-status-on-save))
 
 (use-package git-gutter-fringe
   :ensure t
@@ -562,30 +573,47 @@ get activated now making it read-only."
   ;; (copilot-chat-model "auto")
   (copilot-indent-offset-warning-disable t)
   (copilot-chat-enable-semantic-search t)
-  :hook
-  (prog-mode . copilot-mode)
+
+  :init
+  (defun my/copilot-tab ()
+    "Accept Copilot completion if ghost text is visible; else fallback to indent."
+    (interactive)
+    (or (copilot-accept-completion)
+        (indent-for-tab-command)))
+
+  (defun my/copilot-disable-corfu-auto ()
+    "Disable auto Corfu completion in Copilot buffers to prevent overlay collisions."
+    (setq-local corfu-auto nil))
+
+  (defun my/copilot-chat-disable-flyspell ()
+    "Disable flyspell modes in Copilot chat buffers."
+    (when (bound-and-true-p flyspell-mode)
+      (flyspell-mode -1))
+    (when (and (fboundp 'flyspell-prog-mode)
+               (bound-and-true-p flyspell-prog-mode))
+      (flyspell-prog-mode -1)))
+
   :bind
   (:map copilot-completion-map
-        ("<tab>" . copilot-accept-completion)
+        ("<tab>" . my/copilot-tab)
+        ("TAB" . my/copilot-tab)
         ("C-<tab>" . copilot-accept-completion-by-word)
+        ("C-TAB" . copilot-accept-completion-by-word)
         ("C-n" . copilot-next-completion)
         ("C-p" . copilot-previous-completion))
   (:map copilot-mode-map
-	      ("C-c C-s" . copilot-chat-send-region)
-	      ("C-c C-f" . copilot-chat-send-file))
+        ("C-c C-s" . copilot-chat-send-region)
+        ("C-c C-f" . copilot-chat-send-file))
+
+  :hook
+  (prog-mode . copilot-mode)
+  (copilot-mode . my/copilot-disable-corfu-auto)
+  (copilot-chat-mode . my/copilot-chat-disable-flyspell)
+
   :after embark
   :config
   (push 'embark--ignore-target
-	(alist-get 'copilot-chat-send-region embark-target-injection-hooks))
+        (alist-get 'copilot-chat-send-region embark-target-injection-hooks))
   ;; This used to be embark-consult-search-map so we might want to change this
-  (keymap-set embark-region-map "c" #'copilot-chat-send-region)
-
-  :hook
-  ;; Don't try and spell-check what the AI writes.
-  (copilot-chat-mode . (lambda ()
-                         (when (bound-and-true-p flyspell-mode)
-                           (flyspell-mode -1))
-                         (when (fboundp 'flyspell-prog-mode)
-                           (when (bound-and-true-p flyspell-prog-mode)
-                             (flyspell-prog-mode -1))))))
+  (keymap-set embark-region-map "c" #'copilot-chat-send-region))
 ;; Run copilot-install-server if there are issues, but this doesn't use the system-installed one!

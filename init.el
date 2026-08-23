@@ -85,12 +85,25 @@
 
 (setopt display-time-default-load-average nil) ; this information is useless for most
 
+(defun system-type-is-darwin ()
+  "Return t if system is darwin-based (macOS)."
+  (eq system-type 'darwin))
+
+(defun system-type-is-gnu ()
+  "Return t if system is GNU/Linux-based."
+  (eq system-type 'gnu/linux))
+
+(defun system-type-is-win ()
+  "Return t if system is Windows-based."
+  (memq system-type '(windows-nt ms-dos cygwin)))
+
 ;; Automatically reread from disk if the underlying file changes
-(setopt auto-revert-avoid-polling t)
+(setopt auto-revert-avoid-polling t) ;; should this be system-type-is-gnu?
 ;; Some systems don't do file notifications well; see
 ;; https://todo.sr.ht/~ashton314/emacs-bedrock/11
 (setopt auto-revert-interval 5)
 (setopt auto-revert-check-vc-info t)
+(setopt auto-revert-use-notify (system-type-is-gnu)) ;; Mac as well?
 (global-auto-revert-mode)
 
 ;; Move through windows with Shift-<arrow keys>
@@ -149,18 +162,6 @@ If the new path's directories does not exist, create them."
 ;;
 ;; (let ((backup-dir (expand-file-name "emacs-backup/" user-emacs-directory)))
 ;;   (setopt backup-directory-alist `(("." . ,backup-dir))))
-
-(defun system-type-is-darwin ()
-  "Return t if system is darwin-based (macOS)."
-  (eq system-type 'darwin))
-
-(defun system-type-is-gnu ()
-  "Return t if system is GNU/Linux-based."
-  (eq system-type 'gnu/linux))
-
-(defun system-type-is-win ()
-  "Return t if system is Windows-based."
-  (memq system-type '(windows-nt ms-dos cygwin)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
