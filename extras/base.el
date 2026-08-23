@@ -223,6 +223,14 @@
   ;; All possible completion types; using this to ensure
   (("M-/" . regolith-mantle))
 
+  :custom
+  (cape-dict-file
+   (cl-find-if #'file-exists-p
+               '("/run/current-system/sw/share/dict/words"
+                 "~/.nix-profile/share/dict/words"
+                 "/usr/share/dict/words"
+                 "/usr/dict/words")))
+
   :init
   ;; Inline mapping of global fallbacks: try files first, then text words, then keywords
   (mapc (lambda (backend)
