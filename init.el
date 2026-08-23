@@ -287,6 +287,12 @@ If the new path's directories does not exist, create them."
   :config
   (unkillable-scratch 1))
 
+(use-package eww
+  :ensure nil
+  :bind
+  (:map help-mode-map
+        ("o" . eww)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;;   Tab-bar configuration
