@@ -703,3 +703,16 @@ get activated now making it read-only."
   ;; This used to be embark-consult-search-map so we might want to change this
   (keymap-set embark-region-map "c" #'copilot-chat-send-region))
 ;; Run copilot-install-server if there are issues, but this doesn't use the system-installed one!
+
+;; Configure gptel with use-package, using GitHub Copilot as the model for responses
+(use-package gptel
+  :ensure nil ;; Don't install
+  :if nil ;; Having this here as a snippet for now as a starting
+          ;; point, but it appears to be completely wrong.
+  :custom
+  (gptel-model "github-copilot")
+  (gptel-chat-buffer-name "*GPTel Chat*")
+  :bind
+  (:map gptel-chat-mode-map
+        ("C-c C-s" . gptel-chat-send-region)
+        ("C-c C-f" . gptel-chat-send-file)))
