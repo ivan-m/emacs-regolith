@@ -53,6 +53,34 @@ Otherwise unfill the paragraph at point (detected robustly)."
   ;; It's slow though.
   (text-mode-hook . dictionary-tooltip-mode))
 
+(defun my/kill-line--remove-next-indentation (&rest _)
+  "If at EOL (but not at BOL) remove leading whitespace on the next line.
+This runs before `kill-line` so the following line's indentation is removed
+without moving point."
+  (when (and (eolp) (not (bolp)) (not (eobp)))
+    (save-excursion
+      (forward-char 1)
+      (delete-horizontal-space))))
+
+(advice-add 'kill-line :before #'my/kill-line--remove-next-indentation)
+
+;; Select a region, then type over it to replace it.
+(setopt delete-selection-mode t)
+
+(use-package align
+  :ensure nil                 ; built-in
+  :bind
+  ("C-x a r" . align-regexp))
+
+;; Highlight trailing whitespace, tabs, and empty lines
+(use-package whitespace
+  :ensure nil                 ; built-in
+  :custom
+  (whitespace-style '(face tabs trailing empty))
+  :delight
+  :config
+  (global-whitespace-mode 1))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;;   Markdown

@@ -11,18 +11,6 @@
 ;;;                                                                                 ░░██████
 ;;;                                                                                  ░░░░░░
 
-;;; Minimal init.el
-
-;;; Contents:
-;;;
-;;;  - Basic settings
-;;;  - Discovery aids
-;;;  - Interface enhancements/defaults
-;;;  - Tab-bar configuration
-;;;  - Theme
-;;;  - Optional extras
-;;;  - Built-in customization framework
-
 ;; Lots of mentions of "Bedrock" in this file. See the README.md why.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -42,36 +30,27 @@
  select-enable-clipboard t
  select-active-regions t
 
+ ;; Default is 100
  history-length 1000
- history-delete-duplicates t
-
- bury-successful-compilation t
- truncate-lines t)
-
-(add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
-
-;; Make prompts shorter and easier to answer
-(defalias 'yes-or-no-p 'y-or-n-p)
+ history-delete-duplicates t)
 
 ;; Package initialization
 (with-eval-after-load 'package
   ;; prevent package.el from writing package-selected-packages
   (advice-add #'package--save-selected-packages :override
-              (lambda (&rest _) nil))
+              (lambda (&rest _)
+                "Don't save which packages are installed"
+                nil))
+
   (setq package-selected-packages nil)
 
   ;; Don't suggest removing packages
-  (defun package--removable-packages () nil)
+  (advice-add #'package--removable-packages :override
+              (lambda (&rest _)
+                "Don't try and uninstall packages"
+                nil))
 
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
-
-;; If you want to turn off the welcome screen, uncomment this
-(setopt inhibit-splash-screen t)
-
-;; Changes default mode for the *scratch* buffer; keep it as is
-;; (setopt initial-major-mode 'fundamental-mode)
-
-(setopt display-time-default-load-average nil) ; this information is useless for most
 
 (defun system-type-is-darwin ()
   "Return t if system is darwin-based (macOS)."
@@ -94,39 +73,6 @@
 (setopt auto-revert-use-notify (system-type-is-gnu)) ;; Mac as well?
 (global-auto-revert-mode)
 
-;; Move through windows with Shift-<arrow keys>
-(windmove-default-keybindings 'shift) ; You can use other modifiers here
-
-;; Suppress the error message
-(advice-add 'windmove-do-window-select :around
-  (lambda (orig-fun &rest args)
-    (condition-case nil
-        (apply orig-fun args)
-      (error nil))))
-
-;; Try to stop compilation error, etc. windows from splitting.
-(setopt
- split-width-threshold nil
- split-height-threshold nil)
-
-;; But I do want two split windows side-by-side if possible
-(add-hook 'window-setup-hook
-          (lambda ()
-            (when (and (>= (frame-width) 160)        ; Is the screen wide enough?
-                       (= (length (window-list)) 1)) ; Ensure it hasn't been split yet
-              (split-window-right))))
-
-;; "Fixes" supposedly archaic defaults. But I like them. Leaving here
-;; for documentation purposes.
-;; (setopt sentence-end-double-space nil)
-
-;; Make right-click do something sensible
-(when (display-graphic-p)
-  (context-menu-mode))
-
-;; When doing Page-Up/Page-Down, preserve the cursor's position on the screen.
-(setq scroll-preserve-screen-position t)
-
 ;; Don't litter file system with *~ backup files; put them all inside
 ;; ~/.emacs.d/backup or wherever
 (defun bedrock--backup-file-name (fpath)
@@ -137,6 +83,7 @@ If the new path's directories does not exist, create them."
          (backupFilePath (replace-regexp-in-string "//" "/" (concat backupRootDir filePath "~") )))
     (make-directory (file-name-directory backupFilePath) (file-name-directory backupFilePath))
     backupFilePath))
+
 (setopt
  make-backup-file-name-function 'bedrock--backup-file-name
  backup-by-copying t
@@ -188,44 +135,10 @@ If the new path's directories does not exist, create them."
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Mode line information
-(setopt line-number-mode t)                        ; Show current line in modeline
-(setopt column-number-mode t)                      ; Show column as well
-
-(setopt x-underline-at-descent-line nil)           ; Prettier underlines
-(setopt switch-to-buffer-obey-display-actions t)   ; Make switching buffers more consistent
-
-(setopt size-indication-mode t)
-(setopt use-dialog-box nil) ;; Ask me in the minibuffer instead
-
-(setopt
- show-trailing-whitespace nil      ; By default, don't underline trailing spaces
- indicate-buffer-boundaries 'left  ; Show buffer top and bottom in the margin
- indicate-empty-lines t)           ; Show empty lines in the margin
-
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
-
-;; Enable horizontal scrolling
-(setopt mouse-wheel-tilt-scroll t)
-(setopt mouse-wheel-flip-direction t)
 
 (setopt indent-tabs-mode nil)
 (setopt tab-width 2)
-
-;; Misc. UI tweaks
-(blink-cursor-mode -1)                                ; Steady cursor
-(pixel-scroll-precision-mode)                         ; Smooth scrolling
-
-;; Use common keystrokes by default
-;; (cua-mode)
-;; No, don't do this.
-
-;; For terminal users, make the mouse more useful
-
-(xterm-mouse-mode 1)
-
-;; Display line numbers in programming mode
-(setopt display-line-numbers-width 3)           ; Set a minimum width
 
 ;; Modes to highlight the current line with
 (let ((hl-line-hooks '(text-mode-hook prog-mode-hook)))
@@ -282,113 +195,37 @@ If the new path's directories does not exist, create them."
   (:map help-mode-map
         ("o" . eww)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;;   Tab-bar configuration
-;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Show the tab-bar as soon as tab-bar functions are invoked
-(setopt tab-bar-show 1)
-
-;; Add the time to the tab-bar, if visible
-(add-to-list 'tab-bar-format 'tab-bar-format-align-right 'append)
-(add-to-list 'tab-bar-format 'tab-bar-format-global 'append)
-(setopt display-time-format "%a %F %T")
-(setopt display-time-interval 1)
-(display-time-mode)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;;   Textual helpers
-;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun my/kill-line--remove-next-indentation (&rest _)
-  "If at EOL (but not at BOL) remove leading whitespace on the next line.
-This runs before `kill-line` so the following line's indentation is removed
-without moving point."
-  (when (and (eolp) (not (bolp)) (not (eobp)))
-    (save-excursion
-      (forward-char 1)
-      (delete-horizontal-space))))
-
-(advice-add 'kill-line :before #'my/kill-line--remove-next-indentation)
-
-(use-package delsel
-  :ensure nil                 ; built-in
-  :custom
-  (delete-active-region t)
-  :config
-  (delete-selection-mode 1))
-
-(use-package align
-  :ensure nil                 ; built-in
-  :bind
-  ("C-x a r" . align-regexp))
-
-;; Highlight trailing whitespace, tabs, and empty lines
-(use-package whitespace
-  :ensure nil                 ; built-in
-  :custom
-  (whitespace-style '(face tabs trailing empty))
-  :delight
-  :config
-  (global-whitespace-mode 1))
-
-(use-package auto-highlight-symbol
-  :ensure t
-  :custom
-  (ahs-case-fold-search nil)
-  ;; Allow trailing '
-  (ahs-include "^[0-9A-Za-z/_.,:;*+=&%|$#@!^?-]+'?$")
-  :delight auto-highlight-symbol-mode
-  :config
-  ;; (add-to-list 'ahs-modes 'haskell-mode)
-  (add-to-list 'ahs-modes 'haskell-ts-mode)
-  (global-auto-highlight-symbol-mode 1))
-
-(use-package subword
-  :ensure nil
-  :commands subword-mode
-  :delight subword-mode)
-
-;; Nice rectangle operations
+;; Nice rectangle operations with documentation.
 ;;
 ;; Can also look at the editkit part of the casual package.
-;;
-;; TODO: get help buffer to close if we exit rectangle-mark-mode
 (use-package speedrect
   :ensure t
   :custom
-  (speedrect-mode t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;;   Theme
-;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package emacs
+  (speedrect-mode t)
   :config
-  ;; Customised colour palette to make it less harsh (but not using
-  ;; the -tinted variant as I don't like the blue)
-  ;;
-  ;; Doing this as a "good enough" theme without needing more packages.
-  (setq modus-themes-common-palette-overrides
-	      '((bg-main "#242424")                  ; Matte dark charcoal gray canvas
-          (bg-dim  "#1c1c1c")                  ; Deeper charcoal framing boundaries
-          (bg-line-number-active "#333333")    ; Highlighted line block
-          (fg-main "#dedede")                  ; Off-white reading text
-          (fg-dim  "#9e9e9e")))                ; Soft gravel gray for comments/sub-text
-
-  (load-theme 'modus-vivendi t))          ; maybe requires version 30
+  ;; Close SpeedRect's help buffers when exiting rectangle-mark-mode
+  (defun my/speedrect-close-help-on-rectangle-exit ()
+    "If the SpeedRect help buffer exists, close it when leaving `rectangle-mark-mode'."
+    (when (not rectangle-mark-mode)
+      (let ((buf (get-buffer "SpeedRect Command Key Help")))
+        (when buf
+          ;; If it's visible in windows, use quit-window to remove the window and kill/bury the buffer.
+          (let ((wins (get-buffer-window-list buf nil t)))
+            (if wins
+                (dolist (w wins) (with-selected-window w (quit-window t)))
+              ;; Otherwise just kill the buffer
+              (kill-buffer buf)))))))
+  :hook
+  (rectangle-mark-mode-hook . my/speedrect-close-help-on-rectangle-exit))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;;   Optional extras
+;;;   Additional configuration
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; UI configuration (plus I suppose technically some UX)
+(load-file (expand-file-name "extras/ui.el" user-emacs-directory))
 
 ;; UI/UX enhancements mostly focused on minibuffer and autocompletion interfaces
 (load-file (expand-file-name "extras/base.el" user-emacs-directory))

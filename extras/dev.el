@@ -12,6 +12,30 @@
 
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
+(add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
+
+(use-package subword
+  :ensure nil
+  :commands subword-mode
+  :delight subword-mode
+  :hook
+  ((prog-mode . subword-mode)))
+
+(use-package auto-highlight-symbol
+  :ensure t
+  :custom
+  (ahs-case-fold-search nil)
+  ;; Allow trailing '
+  (ahs-include "^[0-9A-Za-z/_.,:;*+=&%|$#@!^?-]+'?$")
+  :delight auto-highlight-symbol-mode
+  :config
+  ;; Overlaps with a lot of the existing ones, but that's OK.
+  ;;
+  ;; text-mode is already there.
+  (add-to-list 'ahs-modes 'prog-mode)
+  ;; Should this only be enabled for prog-mode and not text-mode?
+  (global-auto-highlight-symbol-mode 1))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;;   Built-in config for developers
