@@ -49,23 +49,11 @@
  truncate-lines t)
 
 (add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
 
 ;; Make prompts shorter and easier to answer
 (defalias 'yes-or-no-p 'y-or-n-p)
 
 ;; Package initialization
-;;
-;; We'll stick to the built-in GNU and non-GNU ELPAs (Emacs Lisp Package
-;; Archive) for the base install, but there are some other ELPAs you could look
-;; at if you want more packages. MELPA in particular is very popular. See
-;; instructions at:
-;;
-;;    https://melpa.org/#/getting-started
-;;
-;; You can simply uncomment the following if you'd like to get started with
-;; MELPA packages quickly:
-;;
 (with-eval-after-load 'package
   ;; prevent package.el from writing package-selected-packages
   (advice-add #'package--save-selected-packages :override
@@ -237,7 +225,6 @@ If the new path's directories does not exist, create them."
 (xterm-mouse-mode 1)
 
 ;; Display line numbers in programming mode
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
 (setopt display-line-numbers-width 3)           ; Set a minimum width
 
 ;; Modes to highlight the current line with
@@ -282,6 +269,8 @@ If the new path's directories does not exist, create them."
   (wdired-allow-to-change-permissions t)
   (dired-mode . #'dired-omit-mode))
 
+;; Not really required any more as you can just use the
+;; 'scratch-buffer' command to re-create it.
 (use-package unkillable-scratch
   :ensure t
   :config
@@ -325,33 +314,6 @@ without moving point."
       (delete-horizontal-space))))
 
 (advice-add 'kill-line :before #'my/kill-line--remove-next-indentation)
-
-(defun my/unfill (&optional arg start end)
-  "Unfill text, making paragraphs single long lines.
-
-With prefix ARG (e.g. C-u) unfill all paragraphs in the buffer.
-With an active region, unfill paragraphs in that region (START..END).
-Otherwise unfill the paragraph at point (detected robustly)."
-  (interactive
-   (list current-prefix-arg
-         (when (use-region-p) (region-beginning))
-         (when (use-region-p) (region-end))))
-  (let ((fill-column most-positive-fixnum))
-    (cond
-     (arg
-      ;; Prefix arg: whole buffer
-      (fill-individual-paragraphs (point-min) (point-max)))
-     ((and start end)
-      ;; Active region: fill each paragraph in the region
-      (fill-individual-paragraphs start end))
-     (t
-      ;; No region: determine the paragraph bounds explicitly and fill that region.
-      (save-excursion
-        (let ((p1 (progn (backward-paragraph) (point)))
-              (p2 (progn (forward-paragraph) (point))))
-          (if (< p1 p2)
-              (fill-region p1 p2)
-            (message "No paragraph at point"))))))))
 
 (use-package delsel
   :ensure nil                 ; built-in
@@ -401,22 +363,6 @@ Otherwise unfill the paragraph at point (detected robustly)."
   :custom
   (speedrect-mode t))
 
-(use-package csv-mode
-  :ensure t
-  :mode
-  "\\.csv\'")
-
-;; Nice line wrapping when working with text
-(add-hook 'text-mode-hook 'visual-line-mode)
-
-;; From https://karthinks.com/software/even-more-batteries-included-with-emacs/#dictionary-on-hover--m-x-dictionary-tooltip-mode
-;;
-;; But doesn't seem to be working very well as a tooltip, and it's quite slow.
-;; (use-package dictionary
-;;   :ensure nil
-;;   :hook
-;;   (text-mode-hook . dictionary-tooltip-mode))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;;   Theme
@@ -427,8 +373,10 @@ Otherwise unfill the paragraph at point (detected robustly)."
   :config
   ;; Customised colour palette to make it less harsh (but not using
   ;; the -tinted variant as I don't like the blue)
+  ;;
+  ;; Doing this as a "good enough" theme without needing more packages.
   (setq modus-themes-common-palette-overrides
-	'((bg-main "#242424")                  ; Matte dark charcoal gray canvas
+	      '((bg-main "#242424")                  ; Matte dark charcoal gray canvas
           (bg-dim  "#1c1c1c")                  ; Deeper charcoal framing boundaries
           (bg-line-number-active "#333333")    ; Highlighted line block
           (fg-main "#dedede")                  ; Off-white reading text
@@ -442,31 +390,14 @@ Otherwise unfill the paragraph at point (detected robustly)."
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Uncomment the (load-file …) lines or copy code from the extras/ elisp files
-;; as desired
-
 ;; UI/UX enhancements mostly focused on minibuffer and autocompletion interfaces
-;; These ones are *strongly* recommended!
 (load-file (expand-file-name "extras/base.el" user-emacs-directory))
+
+;; Textual manipulation configuration
+(load-file (expand-file-name "extras/text.el" user-emacs-directory))
 
 ;; Packages for software development
 (load-file (expand-file-name "extras/dev.el" user-emacs-directory))
-
-;; Vim-bindings in Emacs (evil-mode configuration)
-;(load-file (expand-file-name "extras/vim-like.el" user-emacs-directory))
-
-;; Org-mode configuration
-;; WARNING: need to customize things inside the elisp file before use! See
-;; the file extras/org-intro.txt for help.
-;(load-file (expand-file-name "extras/org.el" user-emacs-directory))
-
-;; Email configuration in Emacs
-;; WARNING: needs the `mu' program installed; see the elisp file for more
-;; details.
-;(load-file (expand-file-name "extras/email.el" user-emacs-directory))
-
-;; Tools for academic researchers
-;(load-file (expand-file-name "extras/researcher.el" user-emacs-directory))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

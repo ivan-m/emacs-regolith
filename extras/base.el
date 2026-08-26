@@ -1,26 +1,8 @@
-;;; Emacs Bedrock
+;;; ░█▀▀░█▄█░█▀█░█▀▀░█▀▀░░░█▀▄░█▀▀░█▀▀░█▀█░█░░░▀█▀░▀█▀░█░█
+;;; ░█▀▀░█░█░█▀█░█░░░▀▀█░░░█▀▄░█▀▀░█░█░█░█░█░░░░█░░░█░░█▀█
+;;; ░▀▀▀░▀░▀░▀░▀░▀▀▀░▀▀▀░░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀▀▀░▀▀▀░░▀░░▀░▀
 ;;;
-;;; Extra config: Base enhancements
-
-;;; Usage: Append or require this file from init.el to enable various UI/UX
-;;; enhancements.
-;;;
-;;; The consult package in particular has a vast number of functions that you
-;;; can use as replacements to what Emacs provides by default. Please see the
-;;; consult documentation for more information and help:
-;;;
-;;;     https://github.com/minad/consult
-;;;
-;;; In particular, many users may find `consult-line' to be more useful to them
-;;; than isearch, so binding this to `C-s' might make sense. This is left to the
-;;; user to configure, however, as isearch and consult-line are not equivalent.
-
-;;; Contents:
-;;;
-;;;  - Motion aids
-;;;  - Power-ups: Embark and Consult
-;;;  - Minibuffer and completion
-;;;  - Misc. editing enhancements
+;;; Cleaner interface, focussing on minibuffer and completion.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -75,6 +57,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Consult: Misc. enhanced commands
+;;
+;; The consult package has a vast number of functions that you can use
+;; as replacements to what Emacs provides by default. Please see the
+;; consult documentation for more information and help:
+;;
+;;     https://github.com/minad/consult
+;;
+;; In particular, many users may find `consult-line' to be more useful to them
+;; than isearch, so binding this to `C-s' might make sense. This is left to the
+;; user to configure, however, as isearch and consult-line are not equivalent.
 (use-package consult
   :ensure t
   :custom
@@ -86,8 +78,7 @@
          ("M-y"   . consult-yank-pop)   ; orig. yank-pop
          ;; Searching
          ("M-s r" . consult-ripgrep)
-         ("M-s l" . consult-line)       ; Alternative: rebind C-s to use
-         ("M-s s" . consult-line)       ; consult-line instead of isearch, bind
+         ("C-s"   . consult-line)       ; Replace isearch-forwar
          ("M-s L" . consult-line-multi) ; isearch to M-s s
          ("M-s o" . consult-outline)
          ;; Isearch integration

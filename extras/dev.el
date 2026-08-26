@@ -1,26 +1,16 @@
-;;; Emacs Bedrock
+;;; ░█▀▀░█▄█░█▀█░█▀▀░█▀▀░░░█▀▄░█▀▀░█▀▀░█▀█░█░░░▀█▀░▀█▀░█░█
+;;; ░█▀▀░█░█░█▀█░█░░░▀▀█░░░█▀▄░█▀▀░█░█░█░█░█░░░░█░░░█░░█▀█
+;;; ░▀▀▀░▀░▀░▀░▀░▀▀▀░▀▀▀░░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀▀▀░▀▀▀░░▀░░▀░▀
 ;;;
-;;; Extra config: Development tools
+;;; Software development.
 
-;;; Usage: Append or require this file from init.el for some software
-;;; development-focused packages.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; It is **STRONGLY** recommended that you use the base.el config if you want to
-;;; use Eglot. Lots of completion things will work better.
+;;;   Basic/inbuilt values
 ;;;
-;;; This will try to use tree-sitter modes for many languages. Please run
-;;;
-;;;   M-x treesit-install-language-grammar
-;;;
-;;; Before trying to use a treesit mode.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; Contents:
-;;;
-;;;  - Built-in config for developers
-;;;  - Version Control
-;;;  - Common file types
-;;;  - Eglot, the built-in LSP client for Emacs
-;;;  - Templating
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -244,7 +234,7 @@
 (use-package magit
   :if (system-type-is-gnu)
 
-  :preface
+  :init
   (defun my/magit-refresh-local-status-on-save ()
     "Refresh the `magit-status' buffer when a local file is saved.
 This function safely ignores remote files handled via TRAMP to
@@ -270,54 +260,6 @@ prevent network latency issues."
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package markdown-mode
-  :ensure t
-  :custom
-  ;; This seems to work well enough for previewing the output with markdown-live-preview-mode.
-  (markdown-command "pandoc --standalone")
-  (markdown-indent-on-enter nil)
-  (markdown-italic-underscore t)
-  (markdown-use-pandoc-style-yaml-metadata t)
-  (markdown-fontify-code-blocks-natively t)
-  (markdown-live-preview-delete-export 'delete-on-export)
-  (markdown-asymmetric-header t)
-  (markdown-header-scaling t)
-  (markdown-marginalize-headers nil) ;; Too thick in practice
-  (markdown-gfm-additional-languages '("elisp"))
-  :config
-  ;; Copilot tends to use emacs-lisp instead of elisp for the identifier.
-  (add-to-list 'markdown-code-lang-modes '("emacs-lisp" . emacs-lisp-mode))
-
-  ;; Define a rule that lets completion try first if we are typing text
-  (defun my/markdown-cycle-allow-completion (orig-fun &rest args)
-    "Let `completion-at-point` step in if the cursor is directly next to text."
-    (if (and (not (bolp))                        ; Not at the start of a line
-             (not (looking-back "^[ \t]*" nil))  ; Not pure indentation whitespace
-             (bound-and-true-p corfu-mode))      ; Corfu is active
-        ;; Run completion. If it returns nil (no templates/words match), run markdown-cycle
-        (unless (completion-at-point)
-          (apply orig-fun args))
-      ;; Otherwise, pass control straight to native markdown-cycle
-      (apply orig-fun args)))
-
-  ;; Apply the advice to intercept markdown-cycle dynamically
-  (advice-add 'markdown-cycle :around #'my/markdown-cycle-allow-completion)
-  :init
-  (defun disable-electric-indent ()
-    (electric-indent-local-mode -1))
-  :hook
-  ((markdown-mode . visual-line-mode)
-   (markdown-mode . disable-electric-indent)))
-
-(use-package poly-markdown
-  :ensure t
-  :delight
-  (poly-markdown-mode " Poly")
-  ;; Historically used to use ("\\.md\\'" "\\.text\\'"
-  ;; "\\.markdown\\'" "[cC]hange\\.?[lL]og?\\'") but in practice I
-  ;; don't need them all any more.
-  :mode ("\\.md\\'" . poly-markdown-mode))
-
 ;; TODO: look at changing this to flymake
 ;;
 ;; See this for some ideas:
@@ -337,55 +279,10 @@ prevent network latency issues."
   :hook
   ((flycheck-mode . flycheck-color-mode-line-mode)))
 
-(use-package flyspell
+(use-package csv-mode
   :ensure t
-  :if (system-type-is-gnu)
-  :delight
-  :custom
-  (flyspell-issue-message-flag nil)
-  (flyspell-issue-welcome-flag nil)
-  :hook
-  ((markdown-mode . flyspell-mode))
-  ((prog-mode . flyspell-prog-mode))
-  :bind
-  ;; Forces flyspell to give C-M-i back to the global completion system
-  (:map flyspell-mode-map
-        ("C-M-i" . nil)
-        ([(control meta i)] . nil)))
-
-(use-package org-table
-  ;; Use the version that ships with Emacs
-  :ensure nil
-  :config
-
-  (defun my/markdown-enable-orgtbl ()
-    "Enable orgtbl in this buffer and disable orgtbl's C-c C-c here.
-The magic orgtbl-ctrl-c-ctrl-c blocks the C-c C-c prefix for
-markdown-mode commands, so we need to disable it."
-    (turn-on-orgtbl)
-    ;; From https://stackoverflow.com/a/26297700
-    ;;
-    ;; Converts org-mode tables to markdown tables (which org-mode can still deal with).
-    (defun cleanup-org-tables ()
-      (save-excursion
-        (goto-char (point-min))
-        (while (search-forward "-+-" nil t) (replace-match "-|-"))))
-
-    (let ((m (make-sparse-keymap)))
-      (define-key m (kbd "C-c C-c") nil)
-      (setq-local minor-mode-overriding-map-alist
-                  (cons (cons 'orgtbl-mode m)
-                        (assq-delete-all 'orgtbl-mode minor-mode-overriding-map-alist))))
-
-    (add-hook 'after-save-hook 'cleanup-org-tables  nil 'make-it-local))
-  :hook
-  ((markdown-mode . my/markdown-enable-orgtbl)))
-
-(use-package pandoc-mode
-  :ensure t
-  :hook
-  ((markdown-mode . pandoc-mode)
-   (pandoc-mode . pandoc-load-default-settings)))
+  :mode
+  "\\.csv\'")
 
 (use-package yaml-ts-mode
   :ensure t
