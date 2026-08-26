@@ -123,8 +123,10 @@
 ;; Vertico: better vertical completion for minibuffer commands
 (use-package vertico
   :ensure t
+  :custom
+  (vertico-cycle t) ;; Cycle through candidates
+  (vertico-resize t)
   :init
-  ;; You'll want to make sure that e.g. fido-mode isn't enabled
   (vertico-mode))
 
 ;; Vertico directory extension: makes DEL/Backspace behave like ido (go up dir),
@@ -132,15 +134,49 @@
 (use-package vertico-directory
   :ensure nil
   :after vertico
+  :custom
+  (vertico-directory-tidy t)
   :bind
+  ;; matches defaults, shown here for visibility
   (:map vertico-map
         ("M-DEL" . vertico-directory-delete-word)
         ("RET" . vertico-directory-enter)
         ("DEL" . vertico-directory-delete-char)))
 
-;; TODO more vertico extensions like multiform for having
-;; functionality-specific configs, unobtrusive for switching buffers,
-;; reverse for things like imenu, etc.
+;; Multiform: choose different presentation per-command / per-category
+(use-package vertico-multiform
+  :after vertico
+  :ensure nil ;; Shipped with vertico
+
+  :custom
+
+  ;; By-category rules (category -> display function/symbol)
+  ;; Common categories: file, buffer, imenu, consult-grep, default, ...
+  (vertico-multiform-categories
+   '((buffer            flat)            ; ido style, don't take too much space
+     (imenu             reverse)         ; imenu -> show above minibuffer
+     (file              reverse)
+     (consult-grep      buffer)
+     (consult-location  buffer)
+     (t                 (:not buffer)))) ; fallback; can't just use 'vertical' annoyingly.
+
+  ;; To find what category a command is in, use M-: to evaluate
+  ;; (completion-metadata-get (completion-metadata "" minibuffer-completion-table minibuffer-completion-predicate) 'category)
+
+  ;; Per-command overrides (command -> display style)
+  ;; Use these if you want fine-grained control for specific commands.
+  ;;
+  ;; Is this duplicating what's above?
+  (vertico-multiform-commands
+   '((consult-buffer    flat))) ; category is multi-category
+  :config
+  (vertico-multiform-mode))
+
+(use-package vertico-mouse
+  :ensure nil
+  :after vertico
+  :config
+  (vertico-mouse-mode))
 
 ;; Marginalia: annotations for minibuffer
 (use-package marginalia
