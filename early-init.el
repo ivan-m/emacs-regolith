@@ -46,9 +46,27 @@
                             ;; Setting the face in here prevents flashes of
                             ;; color as the theme gets activated
                             (background-color . "#000000")
-                            (foreground-color . "#ffffff")
-                            (ns-appearance . dark)
-                            (ns-transparent-titlebar . t)))
+                            (foreground-color . "#ffffff")))
 
 ;; Needs to be defined before use-package is loaded.
 (setq use-package-enable-imenu-support t)
+
+(defconst regolith-work-directory
+  (expand-file-name "work" user-emacs-directory)
+  "Directory for work-related files.")
+
+(defvar regolith-work-mode
+  (file-directory-p regolith-work-directory)
+  "Non-nil if I'm in work mode.")
+
+(defun regolith-load-work-file (file)
+  "If `regolith-work-mode' is non-nil and FILE exists inside `regolith-work-directory',
+load it by calling `load-file'.
+
+FILE is a filename (for example \"early-init.el\")."
+  (let ((path (expand-file-name file regolith-work-directory)))
+    (when (and regolith-work-mode ;; Do this check in case regolith-work-mode becomes a more complex check.
+               (file-exists-p path))
+      (load-file path))))
+
+(regolith-load-work-file "early-init.el")
