@@ -129,3 +129,40 @@
           (fg-dim  "#9e9e9e")))                ; Soft gravel gray for comments/sub-text
 
   (load-theme 'modus-vivendi t))          ; maybe requires version 30
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;;   Other
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Not sure I quite like this; having a bit of padding around the
+;; buffer is nice but I don't like the extra space it adds around the
+;; fringe, between buffers, and the mode line representation.
+;;
+;; It also breaks moody below
+;; (use-package spacious-padding
+;;   :ensure t
+;;   :config
+;;   (spacious-padding-mode 1))
+
+(use-package moody
+  :ensure t
+  :if (display-graphic-p)
+  :config
+  (moody-replace-vc-mode)
+  (moody-replace-mode-line-front-space)
+  (moody-replace-mode-line-buffer-identification))
+
+;; Hide minor modes in the mode line, but show them in a pop-up menu
+;; when you click on the mode line.
+(use-package minions
+  :ensure t
+  :custom
+  (minions-mode-line-delimiters '("[" . "]"))
+  (minions-mode-line-lighter " 🗠")
+  ;; Make the minions mode line face bold by customising the minions-mode-line-face variable
+  (minions-mode-line-face '(:weight bold))
+
+  :config
+  (minions-mode 1))

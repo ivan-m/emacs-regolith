@@ -103,12 +103,20 @@
   (project-vc-extra-files-cache t)
 
   ;; Default interactive modeline
-  (project-mode-line 'non-remote)
+  (project-mode-line 'non-remote) ;; requires Emacs 31
 
   :config
   ;; Don't know if we need to do this or if the vc backend is smart
   ;; enough.
   ;; (add-to-list 'project-vc-root-markers ".git")
+
+  ;; Add a space after the project name in the modeline to avoid it
+  ;; clunking up to the VC information.
+  (advice-add 'project-mode-line-format :filter-return
+              (lambda (format-str)
+                (if (stringp format-str)
+                    (concat format-str " ")
+                  format-str)))
 
   ;; Define an explicit git-grep variant
   (defun my-project-git-grep ()
@@ -513,7 +521,12 @@ get activated now making it read-only."
 ;; See also the counsel-jq package; the restclient jq support is
 ;; probably similar enough I don't need it though.
 
-;; jq-format might be usefil with the reformatter package
+;; jq-format might be useful with the reformatter package
+
+(use-package goto-chg
+  :ensure t
+  :bind (("C->" . goto-last-change)
+         ("C-<" . gogo-last-change-reverse)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -581,6 +594,9 @@ get activated now making it read-only."
   (copilot-indent-offset-warning-disable t)
   (copilot-chat-enable-semantic-search t)
 
+  ;; To change to GitHub enterprise:
+  ;; (copilot-lsp-settings '(:github-enterprise (:uri "https://example2.ghe.com")))
+
   :init
   (defun my/copilot-tab ()
     "Accept Copilot completion if ghost text is visible; else fallback to indent."
@@ -624,6 +640,13 @@ get activated now making it read-only."
   ;; This used to be embark-consult-search-map so we might want to change this
   (keymap-set embark-region-map "c" #'copilot-chat-send-region))
 ;; Run copilot-install-server if there are issues, but this doesn't use the system-installed one!
+
+(use-package copilot
+  :ensure nil
+  :after minions
+  :config
+  ;; Add copilot-mode to the existing prominent modes (avoid duplicates).
+  (add-to-list 'minions-prominent-modes 'copilot-mode))
 
 ;; Configure gptel with use-package, using GitHub Copilot as the model for responses
 (use-package gptel
