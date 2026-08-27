@@ -33,6 +33,24 @@
  split-width-threshold nil
  split-height-threshold nil)
 
+;; Fallback rule for all buffers: reuse existing windows, no new splits
+(setopt display-buffer-base-action
+        '((display-buffer-reuse-mode-window
+           display-buffer-use-some-window)
+          (inhibit-same-window . nil)))
+
+;; Specific exceptions
+(setopt display-buffer-alist
+        `(
+          (,(rx (or "*compilation*" "*Warnings*"))
+           (display-buffer-below-selected)
+           ;; To make it take up the entire bottom of the frame, use this instead of the above line:
+           ;; (display-buffer-in-side-window)
+           ;; (side . bottom)
+           (window-height . 0.1)
+           (preserve-size . (nil . t))
+           (dedicated . t))))
+
 ;; But I do want two split windows side-by-side if possible
 (add-hook 'window-setup-hook
           (lambda ()
