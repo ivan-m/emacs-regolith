@@ -332,8 +332,10 @@
   :ensure t
   :custom
   (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles partial-completion))))
-  (completion-pcm-leading-wildcard t)) ;; Emacs 31: partial-completion behaves like substring
+  (completion-category-overrides '((file (styles partial-completion orderless basic))))
+  (completion-pcm-leading-wildcard t)
+  (read-file-name-completion-ignore-case t))
+;; Emacs 31: partial-completion behaves like substring
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

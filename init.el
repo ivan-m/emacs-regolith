@@ -86,6 +86,7 @@ If the new path's directories does not exist, create them."
 
 (setopt
  make-backup-file-name-function 'bedrock--backup-file-name
+ ;; TODO: auto-save-file-name-transforms, especially for remote files, to avoid creating auto-save files on remote hosts
  backup-by-copying t
  delete-old-versions t)
 
