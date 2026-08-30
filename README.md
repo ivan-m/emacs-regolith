@@ -55,3 +55,25 @@ Nixpkgs](https://github.com/nix-community/emacs-overlay/#extra-library-functiona
 I also have work-specific configuration... but you won't find it here.
 Instead, I have various hooks, etc. to load in work-specific files
 _if_ they are available, then custom branch solely at work.
+
+## TODO
+
+* Highlight TODO, etc. messages (hl-todo?)
+* Code formatting (reformatter? apheleia?)
+* There's an issue using consult instead of isearch where if I found
+  what I want and hit `C-g` to exit then the minibuffer full-screen
+  buffer stays up and I can't use windmove to switch to it (`C-o`
+  works though)
+* Test the work stuff works
+  - Probably want to have a nicer way to specify package-archives to
+    use github mirrors for this
+* `tempel` has a list of template files to begin with, so in work mode
+  I can prepend a new set of templates to the list.
+* Consider these packages:
+  - Different modeline settings:
+    + mode-line-maker?
+  - If I'm going to use nerd-icons, I might as well use more of them
+  - mode-line-debug
+  - popper (make the Chat a popup?)
+  - More/better gptel stuff
+  - verb-mode instead of restclient
