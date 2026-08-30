@@ -84,6 +84,10 @@
 (setopt mouse-wheel-tilt-scroll t)
 (setopt mouse-wheel-flip-direction t)
 
+;; Don't accidentally close windows by clicking on the mode-line
+(define-key global-map [mode-line mouse-2] nil)
+(define-key global-map [mode-line mouse-3] 'minions-minor-modes-menu)
+
 ;; Misc. UI tweaks
 (blink-cursor-mode -1)                                ; Steady cursor
 (pixel-scroll-precision-mode)                         ; Smooth scrolling
@@ -146,23 +150,31 @@
 ;;   :config
 ;;   (spacious-padding-mode 1))
 
-(use-package moody
-  :ensure t
-  :if (display-graphic-p)
-  :config
-  (moody-replace-vc-mode)
-  (moody-replace-mode-line-front-space)
-  (moody-replace-mode-line-buffer-identification))
-
-;; Hide minor modes in the mode line, but show them in a pop-up menu
-;; when you click on the mode line.
+;; This is normally used to hide minor modes in the modeline, but
+;; sleek-modeline already does that, so I just use it to get the
+;; right-click menu on the modeline.
 (use-package minions
   :ensure t
-  :custom
-  (minions-mode-line-delimiters '("[" . "]"))
-  (minions-mode-line-lighter " 🗠")
-  ;; Make the minions mode line face bold by customising the minions-mode-line-face variable
-  (minions-mode-line-face '(:weight bold))
+  :functions
+  minions-minor-modes-menu)
 
+(use-package nerd-icons
+  :ensure t
+  :if (and (display-graphic-p) (system-type-is-gnu)))
+
+;; TODO: can we somehow use the extension mechanism to use minions here still?
+;;
+;; Also look into why the major mode name seems rather boring/plain
+;; and doesn't have the extra stuff (e.g. /l that Emacs Lisp mode has)
+;; that the default mode line shows.
+;;
+;; Help on hover keeps talking about the legacy mouse behaviour, which
+;; I've disabled above...
+(use-package sleek-modeline
+  :ensure t
+  :if (display-graphic-p)
+  :custom
+  (sleek-modeline-size 'medium)
+  (sleek-modeline-suppress-default-mouse nil) ;; Use Emacs mouse menus
   :config
-  (minions-mode 1))
+  (sleek-modeline-mode 1))
