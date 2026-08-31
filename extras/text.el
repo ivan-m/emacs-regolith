@@ -15,7 +15,7 @@
 ;; Nice line wrapping when working with text
 (add-hook 'text-mode-hook 'visual-line-mode)
 
-(defun my/unfill (&optional arg start end)
+(defun regolith/unfill (&optional arg start end)
   "Unfill text, making paragraphs single long lines.
 
 With prefix ARG (e.g. C-u) unfill all paragraphs in the buffer.
@@ -42,6 +42,8 @@ Otherwise unfill the paragraph at point (detected robustly)."
               (fill-region p1 p2)
             (message "No paragraph at point"))))))))
 
+(keymap-set global-map "M-Q" #'regolith/unfill)
+
 (use-package dictionary
   :ensure nil
   :custom
@@ -50,7 +52,7 @@ Otherwise unfill the paragraph at point (detected robustly)."
   :hook
   ;; https://karthinks.com/software/even-more-batteries-included-with-emacs/#dictionary-on-hover--m-x-dictionary-tooltip-mode
   ;;
-  ;; It's slow though.
+  ;; It's slow to actually look words up though.
   (text-mode-hook . dictionary-tooltip-mode))
 
 (defun my/kill-line--remove-next-indentation (&rest _)
@@ -78,8 +80,9 @@ without moving point."
   :custom
   (whitespace-style '(face tabs trailing empty))
   :delight
-  :config
-  (global-whitespace-mode 1))
+  :hook
+  (prog-mode . whitespace-mode)
+  (text-mode . whitespace-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -120,12 +123,14 @@ without moving point."
   ;; Apply the advice to intercept markdown-cycle dynamically
   (advice-add 'markdown-cycle :around #'my/markdown-cycle-allow-completion)
   :init
-  (defun disable-electric-indent ()
+  (defun regolith/disable-electric-indent ()
     (electric-indent-local-mode -1))
   :hook
-  ((markdown-mode . visual-line-mode)
-   (markdown-mode . disable-electric-indent)))
+  ((markdown-mode . regolith/disable-electric-indent)))
 
+;; This is not actually a major mode: the major-mode will be
+;; markdown-mode, but poly-markdown-mode will be active as a minor
+;; mode to provide the multi-mode support.
 (use-package poly-markdown
   :ensure t
   :delight

@@ -78,7 +78,29 @@ _if_ they are available, then custom branch solely at work.
   - popper (make the Chat a popup?)
   - More/better gptel stuff
   - verb-mode instead of restclient
+  - no-littering
+    - Including auto-save-file-name-transforms for remote files.
+  - flymake instead of flycheck
+* Get eglot working (e.g. with Haskell) and see if I can get it to work with the AI stuff (e.g.
+  Copilot)
 * Be consistent with naming conventions for functions and variables
   - `regolith/` prefix for all functions and variables
   - `regolith-work/` prefix for work-specific functions and variables
   - `mantle/` prefix for the capf functionality
+* Check if jinx-mode + prog-mode is a good idea (e.g. for Haskell) or
+  if I should just use it in text-mode
+  - And once I'm happy with jinx, get rid of flyspell references.
+* Expand out this README.md to include more information about the configuration and
+  how to use it (especially work mode; I really should use a different
+  phrase as "mode" is already used in Emacs).
+* Audit keybindings for conflicts using `C-h b` and `which-key-show-full-keymap`;
+  consider `free-keys` package if adding new bindings.
+* Work out how to get `C-c TAB` to be consistent in copilot-chat-mode;
+  sometimes it asks me for buffers and other times it just picks a
+  random one.
+  - Also, why can it sometimes read files I have open and other times
+    it can't and needs me to explicitly send a file reference?
+  - Get `copilot-quota` to display somewhere.
+* Check auto-fill-mode + visual-line-mode interaction in text-mode —
+  auto-fill inserts hard line breaks; confirm this is intentional
+      alongside visual-line-mode.

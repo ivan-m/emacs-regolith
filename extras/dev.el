@@ -109,20 +109,13 @@
   (project-vc-extra-files-cache t)
 
   ;; Default interactive modeline
-  (project-mode-line 'non-remote) ;; requires Emacs 31
+  (project-mode-line 'non-remote)
+  ;; requires Emacs 31 to function properly; with Emacs 30 it acts as 't'.
 
   :config
   ;; Don't know if we need to do this or if the vc backend is smart
   ;; enough.
   ;; (add-to-list 'project-vc-root-markers ".git")
-
-  ;; Add a space after the project name in the modeline to avoid it
-  ;; clunking up to the VC information.
-  (advice-add 'project-mode-line-format :filter-return
-              (lambda (format-str)
-                (if (stringp format-str)
-                    (concat format-str " ")
-                  format-str)))
 
   ;; Define an explicit git-grep variant
   (defun my-project-git-grep ()
@@ -163,18 +156,19 @@
   (xref-auto-jump-to-first-xref 'show)
 
   :init
-  ;; Fires after the Xref buffer finishes drawing to safely style the frame.
-  (add-hook 'xref-after-update-hook
-            (lambda ()
-              ;; Collapse multiple file headers via 'outline-minor-mode' (Emacs 29+)
-              ;; This lets you press TAB on file names to collapse them like an Org file.
-              (outline-minor-mode +1)
+  (defun regolith/xref-buffer-setup ()
+    ;; Collapse multiple file headers via 'outline-minor-mode' (Emacs 29+)
+    ;; This lets you press TAB on file names to collapse them like an Org file.
+    (outline-minor-mode +1)
 
-              ;; Help-quick style reminder bar injected into the top header line
-              (setq header-line-format
-                    (propertize
-                     "  [n/p]: Next/Prev  │  [o]: Preview Match  │  [Enter]: Go to File  │  [r]: Replace  │  [g]: Refresh  │  [q]: Quit  "
-                     'face 'info-menu-header))))
+    ;; Help-quick style reminder bar injected into the top header line
+    (setq header-line-format
+          (propertize
+           "  [n/p]: Next/Prev  │  [o]: Preview Match  │  [Enter]: Go to File  │  [r]: Replace  │  [g]: Refresh  │  [q]: Quit  "
+           'face 'info-menu-header)))
+
+  :hook
+  (xref-after-update-hook . regolith/xref-buffer-setup)
 
   :bind
   ;; Declarative Xref Local Map Overrides
@@ -239,9 +233,6 @@
 (use-package magit
   :ensure t
 
-  :init
-  (magit-auto-revert-mode +1)
-
   :custom
   ;; We should only pick one of global and magit-specific auto revert.
   (magit-auto-revert-mode (not global-auto-revert-mode))
@@ -270,6 +261,7 @@
   :bind (("C-x g" . magit-status)))
 
 (use-package magit
+  :ensure nil ;; Already installed
   :if (system-type-is-gnu)
 
   :init
@@ -313,7 +305,7 @@ prevent network latency issues."
 
 (use-package flycheck-color-mode-line
   :ensure t
-  :after flycheck-mode
+  :after flycheck
   :hook
   ((flycheck-mode . flycheck-color-mode-line-mode)))
 
@@ -324,10 +316,11 @@ prevent network latency issues."
 
 (use-package yaml-ts-mode
   :ensure t
-  :mode "\\.ya?ml\\'"
-  :hook
-  ((yaml-mode . (lambda ()
-                  (electric-indent-local-mode -1)))))
+  :mode "\\.ya?ml\\'")
+;; Don't know if I need this yet.
+;; :hook
+;; ((yaml-ts-mode . (lambda ()
+;;                    (electric-indent-local-mode -1)))))
 
 (use-package nix-ts-mode
   :ensure t
@@ -366,7 +359,7 @@ prevent network latency issues."
       (pulse-momentary-highlight-region (point-min) (point-max)))))
 
 (use-package js
-  :ensure t
+  :ensure nil
   :custom
   ;; Don't actually write JS code, so not sure if it's good to have
   ;; this hard-coded here... but I want it like this for restclient
@@ -534,7 +527,7 @@ get activated now making it read-only."
 (use-package goto-chg
   :ensure t
   :bind (("C->" . goto-last-change)
-         ("C-<" . gogo-last-change-reverse)))
+         ("C-<" . goto-last-change-reverse)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -664,7 +657,8 @@ get activated now making it read-only."
   (:map copilot-mode-map
         ("C-c s" . copilot-chat-send)
         ("C-c C-s" . copilot-chat-send-region)
-        ("C-c c" . copilot-chat-compose))
+        ("C-c c" . copilot-chat-compose)
+        ("C-c f" . copilot-chat-add-file-reference))
 
   :hook
   (prog-mode . copilot-mode)

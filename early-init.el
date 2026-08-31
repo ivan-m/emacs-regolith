@@ -24,12 +24,12 @@
 
 ;; Startup speed, annoyance suppression
 (setq bedrock--initial-gc-threshold gc-cons-threshold)
-(setq gc-cons-threshold 10000000)
+(setq gc-cons-threshold 100000000)
 (setq byte-compile-warnings '(not obsolete))
 (setq warning-suppress-log-types '((comp) (bytecomp)))
 (setq native-comp-async-report-warnings-errors 'silent)
 
-(setq toggle-debug-on-error t)
+(setq debug-on-error t)
 
 ;; Silence stupid startup message
 (setq inhibit-startup-echo-area-message (user-login-name))
@@ -45,8 +45,8 @@
 
                             ;; Setting the face in here prevents flashes of
                             ;; color as the theme gets activated
-                            (background-color . "#000000")
-                            (foreground-color . "#ffffff")))
+                            (background-color . "#242424")   ; matches bg-main override
+                            (foreground-color . "#dedede"))) ; matches fg-main override
 
 ;; Needs to be defined before use-package is loaded.
 (setq use-package-enable-imenu-support t)

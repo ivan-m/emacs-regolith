@@ -134,8 +134,6 @@
 (use-package vertico-directory
   :ensure nil
   :after vertico
-  :custom
-  (vertico-directory-tidy t)
   :bind
   ;; matches defaults, shown here for visibility
   (:map vertico-map
@@ -156,8 +154,8 @@
    '((buffer            flat)            ; ido style, don't take too much space
      (imenu             reverse)         ; imenu -> show above minibuffer
      (file              reverse)
-     (consult-grep      buffer)
-     (t                 (:not buffer)))) ; fallback; can't just use 'vertical' annoyingly.
+     (consult-grep      buffer)))
+  ;; Anything else will use standard vertical mode.
 
   ;; To find what category a command is in, use M-: to evaluate
   ;; (completion-metadata-get (completion-metadata "" minibuffer-completion-table minibuffer-completion-predicate) 'category)
@@ -224,7 +222,6 @@
 (use-package corfu-popupinfo
   :after corfu
   :ensure nil
-  :hook (corfu-mode . corfu-popupinfo-mode)
   :custom
   (corfu-popupinfo-delay '(0.25 . 0.1))
   (corfu-popupinfo-hide nil)
@@ -371,50 +368,3 @@
   ;; writing prose.
   (add-hook 'prog-mode-hook 'tempel-setup-capf)
   (add-hook 'text-mode-hook 'tempel-setup-capf))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;;   Misc. editing enhancements
-;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Modify search results en masse
-(use-package wgrep
-  :ensure t
-  :config
-  (setq wgrep-auto-save-buffer t))
-
-;; Allow "C-x b" to open files that I've visited but are currently
-;; closed.
-(use-package recentf
-  :ensure nil
-  :init
-  (setopt recentf-max-saved-items 1000)
-  ;; Needs to be done before it's started: https://www.emacswiki.org/emacs/RecentFiles#toc12
-  (setopt recentf-auto-cleanup 'never)
-  :custom
-  (recentf-save-file (locate-user-emacs-file "recentf"))
-  :config
-  (setopt recentf-exclude
-          (append recentf-exclude
-                  '("^/sudo:.*"
-                    "^/docker:.*"
-                    "COMMIT_EDITMSG\\'"
-                    ".*-autoloads\\.el\\'"
-                    "ido\\.last"
-                    "^recentf$"
-                    "[/\\]\\.elpa/"
-                    "\\.git/"
-                    "node_modules/"
-                    "\\.cache/")))
-
-  (recentf-mode 1)
-  (add-hook 'kill-emacs-hook #'recentf-save-list)
-  (run-with-idle-timer (* 10 60) t #'recentf-save-list))
-
-(use-package saveplace
-  :ensure nil
-  :init
-  (setq save-place-file (locate-user-emacs-file "saveplace"))
-  :config
-  (save-place-mode 1))

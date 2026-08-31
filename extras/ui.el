@@ -10,10 +10,9 @@
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Make prompts shorter and easier to answer
-(defalias 'yes-or-no-p 'y-or-n-p)
-
-(setopt inhibit-splash-screen t)
+(setopt
+ inhibit-splash-screen t
+ use-short-answers t)
 
 ;; Time and load averages in modeline; not required.
 (setopt display-time-default-load-average nil)
@@ -21,12 +20,15 @@
 ;; Move through windows with Shift-<arrow keys>
 (windmove-default-keybindings 'shift) ; You can use other modifiers here
 
+(defun regolith/windmove-no-error (orig-fun &rest args)
+  "Suppress errors from windmove-do-window-select, so that if you try to move in a direction where there is no window, it doesn't throw an error."
+  (condition-case nil
+      (apply orig-fun args)
+    (error nil)))
+
 ;; Suppress the error message
 (advice-add 'windmove-do-window-select :around
-            (lambda (orig-fun &rest args)
-              (condition-case nil
-                  (apply orig-fun args)
-                (error nil))))
+            #'regolith/windmove-no-error)
 
 ;; Try to stop compilation error, etc. windows from splitting.
 (setopt
@@ -52,11 +54,14 @@
            (dedicated . t))))
 
 ;; But I do want two split windows side-by-side if possible
+(defun regolith/split-window-right-if-wide-enough ()
+  "Split the window vertically if the frame is wide enough and there is only one window."
+  (when (and (>= (frame-width) 160)        ; Is the screen wide enough?
+             (= (length (window-list)) 1)) ; Ensure it hasn't been split yet
+    (split-window-right)))
+
 (add-hook 'window-setup-hook
-          (lambda ()
-            (when (and (>= (frame-width) 160)        ; Is the screen wide enough?
-                       (= (length (window-list)) 1)) ; Ensure it hasn't been split yet
-              (split-window-right))))
+          'regolith/split-window-right-if-wide-enough)
 
 ;; Make right-click do something sensible
 (when (display-graphic-p)
@@ -93,7 +98,8 @@
 (pixel-scroll-precision-mode)                         ; Smooth scrolling
 
 ;; For terminal users, make the mouse more useful
-(xterm-mouse-mode 1)
+(unless (display-graphic-p)
+  (xterm-mouse-mode 1))
 
 ;; Display line numbers in programming mode
 (setopt display-line-numbers-width 3)           ; Set a minimum width
@@ -125,6 +131,10 @@
   ;; the -tinted variant as I don't like the blue)
   ;;
   ;; Doing this as a "good enough" theme without needing more packages.
+  ;;
+  ;; If updating bg-main an dfg-main, also update the
+  ;; default-frame-alist in early-init.el to avoid flashes of color on
+  ;; startup.
   (setq modus-themes-common-palette-overrides
 	      '((bg-main "#242424")                  ; Matte dark charcoal gray canvas
           (bg-dim  "#1c1c1c")                  ; Deeper charcoal framing boundaries
@@ -132,7 +142,7 @@
           (fg-main "#dedede")                  ; Off-white reading text
           (fg-dim  "#9e9e9e")))                ; Soft gravel gray for comments/sub-text
 
-  (load-theme 'modus-vivendi t))          ; maybe requires version 30
+  (load-theme 'modus-vivendi t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

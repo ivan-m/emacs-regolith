@@ -22,13 +22,13 @@
 (setopt
  user-full-name "Ivan Lazar Miljenovic"
 
- ;; TODO: not when working.
+ ;; Override in work mode.
  user-mail-address "Ivan.Miljenovic@gmail.com"
 
  require-final-newline t
  select-enable-primary nil
  select-enable-clipboard t
- select-active-regions t
+ select-active-regions nil
 
  ;; Default is 100
  history-length 1000
@@ -108,19 +108,28 @@ If the new path's directories does not exist, create them."
 ;; Show the help buffer after startup
 ;; (add-hook 'after-init-hook 'help-quick)
 
-;; Used to hide minor modes from the mode line.
+;; Used to hide minor modes from the mode line.  Used for :delight
+;; settings in use-package.
+;;
+;; Note: since sleek-modeline suppresses minor mode display anyway,
+;; these :delight settings have no visible effect while sleek-modeline
+;; is active — but they're here for correctness if the modeline ever changes.
 (use-package delight
   :ensure t
-  :demand t
+  :demand t)
+
+(use-package emacs
+  :ensure nil
   :delight
   (visual-line-mode)
-  (outline-mode)
   (auto-fill-function)
-  (flyspell-prog-mode)
   (abbrev-mode)
   (subword-mode)
-  (which-key-mode)
   (eldoc-mode))
+
+(use-package outline
+  :ensure nil
+  :delight outline-mode)
 
 ;; which-key: shows a popup of available keybindings when typing a long key
 ;; sequence (e.g. C-x ...)
@@ -181,7 +190,8 @@ If the new path's directories does not exist, create them."
   ;; default is -al
   (dired-listing-switches "-alh")
   (wdired-allow-to-change-permissions t)
-  (dired-mode . #'dired-omit-mode))
+  :hook
+  (dired-mode . dired-omit-mode))
 
 ;; Not really required any more as you can just use the
 ;; 'scratch-buffer' command to re-create it.
@@ -219,6 +229,48 @@ If the new path's directories does not exist, create them."
   :hook
   (rectangle-mark-mode-hook . my/speedrect-close-help-on-rectangle-exit))
 
+;; Modify search results en masse
+(use-package wgrep
+  :ensure t
+  :custom
+  (wgrep-auto-save-buffer t))
+
+;; Allow "C-x b" to open files that I've visited but are currently
+;; closed.
+(use-package recentf
+  :ensure nil
+  :init
+  (setopt recentf-max-saved-items 1000)
+  ;; Needs to be done before it's started: https://www.emacswiki.org/emacs/RecentFiles#toc12
+  (setopt recentf-auto-cleanup 'never)
+  :custom
+  (recentf-save-file (locate-user-emacs-file "recentf"))
+  :config
+  ;; Add more files; can't be in :custom because of self-reference.
+  (setopt recentf-exclude
+          (append recentf-exclude
+                  '("^/sudo:.*"
+                    "^/docker:.*"
+                    "COMMIT_EDITMSG\\'"
+                    ".*-autoloads\\.el\\'"
+                    "ido\\.last"
+                    "^recentf$"
+                    "[/\\]\\.elpa/"
+                    "\\.git/"
+                    "node_modules/"
+                    "\\.cache/")))
+
+  (recentf-mode 1)
+  (add-hook 'kill-emacs-hook #'recentf-save-list)
+  (run-with-idle-timer (* 10 60) t #'recentf-save-list))
+
+(use-package saveplace
+  :ensure nil
+  :custom
+  (save-place-file (locate-user-emacs-file "saveplace"))
+  :config
+  (save-place-mode 1))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;;   Additional configuration
@@ -229,7 +281,7 @@ If the new path's directories does not exist, create them."
 (load-file (expand-file-name "extras/ui.el" user-emacs-directory))
 
 ;; UI/UX enhancements mostly focused on minibuffer and autocompletion interfaces
-(load-file (expand-file-name "extras/base.el" user-emacs-directory))
+(load-file (expand-file-name "extras/completion.el" user-emacs-directory))
 
 ;; Textual manipulation configuration
 (load-file (expand-file-name "extras/text.el" user-emacs-directory))
