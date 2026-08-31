@@ -597,6 +597,7 @@ get activated now making it read-only."
 ;; Async formatting run on after-save-hook.
 (use-package apheleia
   :ensure t
+  :if (system-type-is-gnu)
   :config
   ;; Allow overriding the formatters and mode-alist in local variables, so that
   ;; we can have project-specific formatters.
@@ -647,13 +648,10 @@ get activated now making it read-only."
     "Disable auto Corfu completion in Copilot buffers to prevent overlay collisions."
     (setq-local corfu-auto nil))
 
-  (defun my/copilot-chat-disable-flyspell ()
-    "Disable flyspell modes in Copilot chat buffers."
-    (when (bound-and-true-p flyspell-mode)
-      (flyspell-mode -1))
-    (when (and (fboundp 'flyspell-prog-mode)
-               (bound-and-true-p flyspell-prog-mode))
-      (flyspell-prog-mode -1)))
+  (defun my/copilot-chat-disable-jinx ()
+    "Disable `jinx-mode' in Copilot chat buffers."
+    (when (bound-and-true-p jinx-mode)
+      (jinx-mode -1)))
 
   :bind
   (:map copilot-completion-map
@@ -664,13 +662,15 @@ get activated now making it read-only."
         ("C-n" . copilot-next-completion)
         ("C-p" . copilot-previous-completion))
   (:map copilot-mode-map
+        ("C-c s" . copilot-chat-send)
         ("C-c C-s" . copilot-chat-send-region)
-        ("C-c C-f" . copilot-chat-send-file))
+        ("C-c c" . copilot-chat-compose))
 
   :hook
   (prog-mode . copilot-mode)
+  (markdown-mode . copilot-mode)
   (copilot-mode . my/copilot-disable-corfu-auto)
-  (copilot-chat-mode . my/copilot-chat-disable-flyspell)
+  (copilot-chat-mode . my/copilot-chat-disable-jinx)
 
   :after embark
   :config
