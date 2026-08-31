@@ -157,7 +157,6 @@
      (imenu             reverse)         ; imenu -> show above minibuffer
      (file              reverse)
      (consult-grep      buffer)
-     (consult-location  buffer)
      (t                 (:not buffer)))) ; fallback; can't just use 'vertical' annoyingly.
 
   ;; To find what category a command is in, use M-: to evaluate
