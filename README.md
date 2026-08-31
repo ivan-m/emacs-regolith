@@ -78,3 +78,7 @@ _if_ they are available, then custom branch solely at work.
   - popper (make the Chat a popup?)
   - More/better gptel stuff
   - verb-mode instead of restclient
+* Be consistent with naming conventions for functions and variables
+  - `regolith/` prefix for all functions and variables
+  - `regolith-work/` prefix for work-specific functions and variables
+  - `mantle/` prefix for the capf functionality
