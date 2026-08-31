@@ -340,6 +340,8 @@ prevent network latency issues."
 
 (use-package haskell-ts-mode
   :ensure t
+  ;; Not actually shown, but for when it works: https://github.com/abidanBrito/sleek-modeline/issues/12
+  :delight (haskell-ts-mode "Haskell" :major)
   :custom
   ;; May be broken
   (haskell-ts-use-indent t)
