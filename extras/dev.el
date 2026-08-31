@@ -36,6 +36,12 @@
   ;; Should this only be enabled for prog-mode and not text-mode?
   (global-auto-highlight-symbol-mode 1))
 
+(use-package hl-todo
+  :ensure t
+  :delight hl-todo-mode
+  :hook
+  ((prog-mode . hl-todo-mode)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;;   Built-in config for developers
