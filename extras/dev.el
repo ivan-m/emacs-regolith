@@ -88,9 +88,9 @@
 
 (use-package prog-mode
   :ensure nil)
-  ;; :hook
-  ;; ;; Auto parenthesis matching
-  ;; ((prog-mode . electric-pair-mode)))
+;; :hook
+;; ;; Auto parenthesis matching
+;; ((prog-mode . electric-pair-mode)))
 
 (use-package rainbow-delimiters
   :ensure t
@@ -519,9 +519,9 @@ get activated now making it read-only."
 
   (transient-append-suffix 'regolith-mantle '(-1)
     '["HTTP & Web"
-     ("H" "HTTP Headers" mantle-http-headers-capf)
-     ("M" "HTTP Methods" mantle-http-methods-capf)
-     ("S" "HTTP Status Codes" mantle-http-status-capf)])
+      ("H" "HTTP Headers" mantle-http-headers-capf)
+      ("M" "HTTP Methods" mantle-http-methods-capf)
+      ("S" "HTTP Status Codes" mantle-http-status-capf)])
 
   :hook
   (restclient-mode . mantle-http-setup-completion))
@@ -550,8 +550,8 @@ get activated now making it read-only."
   :ensure nil
 
   ;; Configure hooks to automatically turn-on eglot for selected modes
-  ; :hook
-  ; (((python-mode ruby-mode elixir-mode) . eglot-ensure))
+  ;; :hook
+  ;; (((python-mode ruby-mode elixir-mode) . eglot-ensure))
 
   :custom
   (eglot-send-changes-idle-time 0.1)
@@ -561,8 +561,8 @@ get activated now making it read-only."
   :config
   (fset #'jsonrpc--log-event #'ignore)  ; massive perf boost---don't log every event
   ;; Sometimes you need to tell Eglot where to find the language server
-  ; (add-to-list 'eglot-server-programs
-  ;              '(haskell-mode . ("haskell-language-server-wrapper" "--lsp")))
+  ;; (add-to-list 'eglot-server-programs
+  ;;              '(haskell-mode . ("haskell-language-server-wrapper" "--lsp")))
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -587,6 +587,37 @@ get activated now making it read-only."
   :config
   (eat-eshell-mode)                     ; use Eat to handle term codes in program output
   (eat-eshell-visual-command-mode))     ; commands like less will be handled by Eat
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;;   Code formatting
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Async formatting run on after-save-hook.
+(use-package apheleia
+  :ensure t
+  :config
+  ;; Allow overriding the formatters and mode-alist in local variables, so that
+  ;; we can have project-specific formatters.
+  (put 'apheleia-formatters 'safe-local-variable #'listp)
+  (put 'apheleia-mode-alist 'safe-local-variable #'listp)
+  (apheleia-global-mode +1))
+
+;; How to configure a project-specific formatter for Haskell using apheleia:
+;;
+;; path/to/project/.dir-locals.el
+;; ((haskell-ts-mode
+;;   . ((apheleia-formatters
+;;       . ((my-haskell-formatter
+;;              ;; apheleia-from-project-root is a shell script that comes with aphelelia to help run everything from the specified path
+;;           . ("apheleia-from-project-root" ".git" "bin/my-formatter.sh" filepath))))))
+;;  ("src"
+;;   . ((haskell-ts-mode
+;;       . ((apheleia-formatter . my-haskell-formatter)))))
+;;  ("upstream"
+;;   . ((haskell-ts-mode
+;;       . ((apheleia-mode . nil))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -659,8 +690,9 @@ get activated now making it read-only."
 ;; Configure gptel with use-package, using GitHub Copilot as the model for responses
 (use-package gptel
   :ensure nil ;; Don't install
-  :if nil ;; Having this here as a snippet for now as a starting
-          ;; point, but it appears to be completely wrong.
+  :if nil
+  ;; Having this here as a snippet for now as a starting
+  ;; point, but it appears to be completely wrong.
   :custom
   (gptel-model "github-copilot")
   (gptel-chat-buffer-name "*GPTel Chat*")

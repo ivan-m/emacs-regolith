@@ -58,7 +58,6 @@ _if_ they are available, then custom branch solely at work.
 
 ## TODO
 
-* Code formatting (reformatter? apheleia?)
 * There's an issue using consult instead of isearch where if I found
   what I want and hit `C-g` to exit then the minibuffer full-screen
   buffer stays up and I can't use windmove to switch to it (`C-o`

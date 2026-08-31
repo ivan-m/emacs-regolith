@@ -147,12 +147,12 @@ If the new path's directories does not exist, create them."
 
 ;; Timestamp messages in the *Messages* buffer
 (advice-add 'message :around
-  (lambda (orig-fn &rest args)
-    (if args
-        (apply orig-fn (concat (format-time-string "[%Y-%m-%d %T %Z] ")
-                               (car args))
-               (cdr args))
-      (apply orig-fn args))))
+            (lambda (orig-fn &rest args)
+              (if args
+                  (apply orig-fn (concat (format-time-string "[%Y-%m-%d %T %Z] ")
+                                         (car args))
+                         (cdr args))
+                (apply orig-fn args))))
 
 (use-package crux
   :ensure t

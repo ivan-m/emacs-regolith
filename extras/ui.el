@@ -23,10 +23,10 @@
 
 ;; Suppress the error message
 (advice-add 'windmove-do-window-select :around
-  (lambda (orig-fun &rest args)
-    (condition-case nil
-        (apply orig-fun args)
-      (error nil))))
+            (lambda (orig-fun &rest args)
+              (condition-case nil
+                  (apply orig-fun args)
+                (error nil))))
 
 ;; Try to stop compilation error, etc. windows from splitting.
 (setopt

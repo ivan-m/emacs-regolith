@@ -28,7 +28,7 @@
 (setopt completions-format 'one-column)
 (setopt completions-group t)
 (setopt completion-auto-select 'second-tab)            ; Much more eager
-;(setopt completion-auto-select t)                     ; See `C-h v completion-auto-select' for more possible values
+;;(setopt completion-auto-select t)                    ; See `C-h v completion-auto-select' for more possible values
 
 (keymap-set minibuffer-mode-map "TAB" 'minibuffer-complete) ; TAB acts more like how it does in the shell
 
@@ -396,17 +396,17 @@
   (recentf-save-file (locate-user-emacs-file "recentf"))
   :config
   (setopt recentf-exclude
-    (append recentf-exclude
-      '("^/sudo:.*"
-        "^/docker:.*"
-        "COMMIT_EDITMSG\\'"
-        ".*-autoloads\\.el\\'"
-        "ido\\.last"
-        "^recentf$"
-        "[/\\]\\.elpa/"
-        "\\.git/"
-        "node_modules/"
-        "\\.cache/")))
+          (append recentf-exclude
+                  '("^/sudo:.*"
+                    "^/docker:.*"
+                    "COMMIT_EDITMSG\\'"
+                    ".*-autoloads\\.el\\'"
+                    "ido\\.last"
+                    "^recentf$"
+                    "[/\\]\\.elpa/"
+                    "\\.git/"
+                    "node_modules/"
+                    "\\.cache/")))
 
   (recentf-mode 1)
   (add-hook 'kill-emacs-hook #'recentf-save-list)
