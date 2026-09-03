@@ -168,6 +168,13 @@
   :functions
   minions-minor-modes-menu)
 
+;; Using the default Symbol font.  Not doing it on Windows as we don't
+;; have the font installed there.
+;;
+;; Technically we can use nerd-icons in the terminal as well and not
+;; require display-graphic-p, but in the rare case I'm using terminal
+;; Emacs I probably want it as light as possible, so don't load it
+;; there.
 (use-package nerd-icons
   :ensure t
   :if (and (display-graphic-p) (system-type-is-gnu)))

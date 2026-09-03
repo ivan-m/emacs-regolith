@@ -315,14 +315,6 @@
       ("x" "TeX / LaTeX"          cape-tex)
       ("r" "RFC 1345 Mnemonics"   cape-rfc1345)]]))
 
-;; Pretty icons for corfu
-(use-package kind-icon
-  :if (display-graphic-p)
-  :ensure t
-  :after corfu
-  :config
-  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
-
 ;; Orderless: powerful completion style
 (use-package orderless
   :ensure t
@@ -332,6 +324,65 @@
   (completion-pcm-leading-wildcard t)
   (read-file-name-completion-ignore-case t))
 ;; Emacs 31: partial-completion behaves like substring
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;;   Pretty icons for completion, etc.
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; nerd-icons for completions, including marginalia
+(use-package nerd-icons-completion
+  :ensure t
+  :if (and (display-graphic-p) (system-type-is-gnu))
+  :after (nerd-icons marginalia)
+  :config
+  (nerd-icons-completion-mode)
+  ;; Not evaluating this for now as it's only required if we specify
+  ;; this before marginalia... which we're not.  Seems to work.
+  ;; (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup)
+  )
+
+(use-package nerd-icons-corfu
+  :ensure t
+  :if (and (display-graphic-p) (system-type-is-gnu))
+  :after (nerd-icons corfu)
+  :config
+  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
+
+(use-package nerd-icons-dired
+  :ensure t
+  :if (and (display-graphic-p) (system-type-is-gnu))
+  :after (nerd-icons dired)
+  :hook
+  (dired-mode . nerd-icons-dired-mode))
+
+(use-package nerd-icons-xref
+  :ensure t
+  :if (and (display-graphic-p) (system-type-is-gnu))
+  :after (nerd-icons xref)
+  :init
+  (nerd-icons-xref-mode))
+
+;; consult-ripgrep won't work directly... but if you embark export it will.
+(use-package nerd-icons-grep
+  :ensure t
+  :if (and (display-graphic-p) (system-type-is-gnu))
+  :after (nerd-icons grep)
+  :init
+  (nerd-icons-grep-mode)
+  :custom
+  ;; This setting is a pre-requirement, so an icon can be displayed near each
+  ;; heading
+  (grep-use-headings t))
+
+;; Pretty icons for corfu on Windows as this doesn't require an external font.
+(use-package kind-icon
+  :ensure t
+  :if (and (display-graphic-p) (system-type-is-win))
+  :after corfu
+  :config
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

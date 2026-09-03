@@ -73,7 +73,6 @@ _if_ they are available, then custom branch solely at work.
 * Consider these packages:
   - Different modeline settings:
     + mode-line-maker?
-  - If I'm going to use nerd-icons, I might as well use more of them
   - mode-line-debug
   - popper (make the Chat a popup?)
   - More/better gptel stuff
