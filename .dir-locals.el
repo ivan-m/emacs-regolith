@@ -1,5 +1,4 @@
 ;;; Directory Local Variables            -*- no-byte-compile: t -*-
 ;;; For more information see (info "(emacs) Directory Variables")
 
-((nil . ((project-vc-name . "regolith")))
- (emacs-lisp-mode . ((lexical-binding . t))))
+((nil . ((project-vc-name . "regolith"))))
