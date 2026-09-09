@@ -245,8 +245,36 @@
 (use-package transient
   :ensure nil
   :custom
-  ;; Prevent Transient from reading or writing to the magic state file
-  (transient-values-file nil))
+  (transient-save-history nil)
+
+  ;; Make transient fit to current window, not full frame.
+  (transient-display-buffer-action
+   '(display-buffer-below-selected
+     (side . bottom)
+     (window-width . 1.0)
+     (window-height . fit-window-to-buffer)
+     (dedicated . t)
+     (inhibit-same-window . t)))
+  :config
+  ;; Transient tries to be helpful and save various history,
+  ;; configurations, etc. to disk.
+  ;;
+  ;; I don't want this, as I think it should be configured solely
+  ;; here.
+  ;;
+  ;; So let's try and disable it.  Doing it via setting filenames to
+  ;; nil or /dev/null doesn't work, so let's override the functions
+  ;; that read/write to disk.
+
+  ;; Prevent transient from trying to read from file
+  (advice-add 'transient-read-levels  :override #'ignore)
+  (advice-add 'transient-read-values  :override #'ignore)
+  (advice-add 'transient-read-history :override #'ignore)
+
+  ;; Prevent transient from trying to write to file
+  (advice-add 'transient-save-levels  :override #'ignore)
+  (advice-add 'transient-save-values  :override #'ignore)
+  (advice-add 'transient-save-history :override #'ignore))
 
 ;; Fancy completion-at-point functions; there's too much in the cape package to
 ;; configure here; dive in when you're comfortable!

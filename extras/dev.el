@@ -512,7 +512,8 @@ get activated now making it read-only."
     (add-hook 'completion-at-point-functions
               #'mantle-http-super-capf nil t))
 
-  (transient-append-suffix 'regolith-mantle '(-1)
+  ;; (0 -1) means append end of the 0th row
+  (transient-append-suffix 'regolith-mantle '(0 -1)
     '["HTTP & Web"
       ("H" "HTTP Headers" mantle-http-headers-capf)
       ("M" "HTTP Methods" mantle-http-methods-capf)
