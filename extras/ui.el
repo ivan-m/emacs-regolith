@@ -168,7 +168,19 @@
 (use-package minions
   :ensure t
   :functions
-  minions-minor-modes-menu)
+  minions-minor-modes-menu
+  :config
+  ;; Avoid issues with string-match being called on non-strings, which
+  ;; results in errors (typically to do with markdown mode for some
+  ;; reason).
+  (advice-add 'minions-minor-modes-menu :around
+              (lambda (orig-fun &rest args)
+                (cl-letf* ((old-sm (symbol-function 'string-match))
+                           ((symbol-function 'string-match)
+                            (lambda (regexp string &rest rest-args)
+                              (when (stringp string)
+                                (apply old-sm regexp string rest-args)))))
+                  (apply orig-fun args)))))
 
 ;; Using the default Symbol font.  Not doing it on Windows as we don't
 ;; have the font installed there.
