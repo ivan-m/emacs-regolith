@@ -109,6 +109,7 @@ without moving point."
   :config
   ;; Copilot tends to use emacs-lisp instead of elisp for the identifier.
   (add-to-list 'markdown-code-lang-modes '("emacs-lisp" . emacs-lisp-mode))
+  (add-to-list 'markdown-code-lang-modes '("json" . json-ts-mode))
 
   ;; Define a rule that lets completion try first if we are typing text
   (defun my/markdown-cycle-allow-completion (orig-fun &rest args)
@@ -128,19 +129,14 @@ without moving point."
   (defun regolith/disable-electric-indent ()
     (electric-indent-local-mode -1))
   :hook
-  ((markdown-mode . regolith/disable-electric-indent)))
+  ((markdown-mode . regolith/disable-electric-indent))
+  :mode ("\\.md\\'" . markdown-mode)
+  ("\\.markdown\\'" . markdown-mode)
+  ("\\.text\\'" . markdown-mode))
 
-;; This is not actually a major mode: the major-mode will be
-;; markdown-mode, but poly-markdown-mode will be active as a minor
-;; mode to provide the multi-mode support.
-(use-package poly-markdown
-  :ensure t
-  :delight
-  (poly-markdown-mode " Poly")
-  ;; Historically used to use ("\\.md\\'" "\\.text\\'"
-  ;; "\\.markdown\\'" "[cC]hange\\.?[lL]og?\\'") but in practice I
-  ;; don't need them all any more.
-  :mode ("\\.md\\'" . poly-markdown-mode))
+;; To be able to edit Markdown code blocks in indirect buffers with `C-c '`.
+(use-package edit-indirect
+  :ensure t)
 
 (use-package org-table
   ;; Use the version that ships with Emacs

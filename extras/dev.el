@@ -60,15 +60,16 @@
   ;; Tell Emacs to prefer the treesitter mode
   ;; You'll want to run the command `M-x treesit-install-language-grammar' before editing.
 
-  ;; (major-mode-remap-alist
-  ;;       '((yaml-mode . yaml-ts-mode)
-  ;;         (bash-mode . bash-ts-mode)
-  ;;         (js2-mode . js-ts-mode)
-  ;;         (typescript-mode . typescript-ts-mode)
-  ;;         (json-mode . json-ts-mode)
-  ;;         (css-mode . css-ts-mode)
-  ;;         (python-mode . python-ts-mode)))
-
+  (major-mode-remap-alist
+   '((yaml-mode . yaml-ts-mode)
+     (bash-mode . bash-ts-mode)
+     (js2-mode . js-ts-mode)
+     (typescript-mode . typescript-ts-mode)
+     (json-mode . json-ts-mode)
+     (css-mode . css-ts-mode)
+     (python-mode . python-ts-mode)
+     (haskell-mode . haskell-ts-mode)
+     (nix-mode . nix-ts-mode)))
   )
 
 (use-package treesit-auto
@@ -323,6 +324,10 @@ prevent network latency issues."
 ;; :hook
 ;; ((yaml-ts-mode . (lambda ()
 ;;                    (electric-indent-local-mode -1)))))
+
+(use-package json-ts-mode
+  :ensure t
+  :mode "\\.json\\'")
 
 (use-package nix-ts-mode
   :ensure t
