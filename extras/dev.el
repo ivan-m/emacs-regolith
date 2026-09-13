@@ -629,52 +629,23 @@ get activated now making it read-only."
 
 (use-package copilot
   :ensure t
+  :after
+  (embark project) ;; Internally depends upon project
   :custom
-  ;; https://github.com/copilot-emacs/copilot.el/issues/473
-  ;; (copilot-chat-model "auto")
   (copilot-indent-offset-warning-disable t)
   (copilot-chat-enable-semantic-search t)
 
   ;; To change to GitHub enterprise:
   ;; (copilot-lsp-settings '(:github-enterprise (:uri "https://example2.ghe.com")))
 
-  :init
-  (defun my/copilot-tab ()
-    "Accept Copilot completion if ghost text is visible; else fallback to indent."
-    (interactive)
-    (or (copilot-accept-completion)
-        (indent-for-tab-command)))
-
-  (defun my/copilot-disable-corfu-auto ()
-    "Disable auto Corfu completion in Copilot buffers to prevent overlay collisions."
-    (setq-local corfu-auto nil))
-
-  (defun my/copilot-chat-disable-jinx ()
-    "Disable `jinx-mode' in Copilot chat buffers."
-    (when (bound-and-true-p jinx-mode)
-      (jinx-mode -1)))
-
   :bind
-  (:map copilot-completion-map
-        ("<tab>" . my/copilot-tab)
-        ("TAB" . my/copilot-tab)
-        ("C-<tab>" . copilot-accept-completion-by-word)
-        ("C-TAB" . copilot-accept-completion-by-word)
-        ("C-n" . copilot-next-completion)
-        ("C-p" . copilot-previous-completion))
   (:map copilot-mode-map
-        ("C-c s" . copilot-chat-send)
-        ("C-c C-s" . copilot-chat-send-region)
-        ("C-c c" . copilot-chat-compose)
-        ("C-c f" . copilot-chat-add-file-reference))
+        ("C-c c" . copilot-menu))
 
   :hook
   (prog-mode . copilot-mode)
-  (markdown-mode . copilot-mode)
-  (copilot-mode . my/copilot-disable-corfu-auto)
-  (copilot-chat-mode . my/copilot-chat-disable-jinx)
+  (prog-mode . copilot-nes-mode)
 
-  :after embark
   :config
   (push 'embark--ignore-target
         (alist-get 'copilot-chat-send-region embark-target-injection-hooks))
@@ -688,6 +659,74 @@ get activated now making it read-only."
   :config
   ;; Add copilot-mode to the existing prominent modes (avoid duplicates).
   (add-to-list 'minions-prominent-modes 'copilot-mode))
+
+(use-package copilot-chat
+  :ensure nil
+  :after copilot
+  :custom
+  ;; Use:
+  ;;   * You
+  ;;   ** Copilot
+  ;; for each exchange.
+  (copilot-chat-frontend 'org)
+
+  ;; Keep the package's status line.
+  (copilot-chat-show-status-header t)
+
+  :bind
+  (:map copilot-chat-mode-map
+        ("C-c c" . copilot-menu))
+
+  :config
+  (defface my/copilot-chat-user-heading
+    '((t (:inherit org-level-1
+                   :foreground "#8be9fd"
+                   :background "#20343a"
+                   :weight bold
+                   :extend t)))
+    "Face used for user headings in Copilot Chat."
+    :group 'copilot-chat)
+
+  (defface my/copilot-chat-assistant-heading
+    '((t (:inherit org-level-2
+                   :foreground "#50fa7b"
+                   :background "#203a2a"
+                   :weight bold
+                   :extend t)))
+    "Face used for Copilot headings in Copilot Chat."
+    :group 'copilot-chat)
+
+  (defun my/copilot-chat-add-gutters (limit)
+    "Add VS Code-like coloured gutter markers to Copilot Chat headings."
+    (when (re-search-forward "^\\*\\*? \\(You\\|Copilot\\)$" limit t)
+      (let* ((assistant (equal (match-string-no-properties 1) "Copilot"))
+             (prefix (propertize
+                      (if (eq system-type 'gnu/linux)
+                          (if assistant "   " "   ") ;; Should have nerd-fonts installed for these to work, otherwise fallback to text.
+                        (if assistant "  [A] " "  [U] "))
+                      'face (if assistant
+                                'my/copilot-chat-assistant-heading
+                              'my/copilot-chat-user-heading)))
+             (beg (line-beginning-position))
+             (end (line-end-position)))
+        (add-text-properties
+         beg end
+         `(line-prefix ,prefix
+                       wrap-prefix ,prefix)))
+      t))
+
+  (defun my/copilot-chat-style-headings ()
+    "Style user and assistant headings in Copilot Chat."
+    (font-lock-add-keywords
+     nil
+     '(("^\\* You$" . 'my/copilot-chat-user-heading)
+       ("^\\*\\* Copilot$" . 'my/copilot-chat-assistant-heading)
+       (my/copilot-chat-add-gutters))
+     'append)
+    (font-lock-flush)
+    (font-lock-ensure))
+  :hook
+  (copilot-chat-mode . my/copilot-chat-style-headings))
 
 ;; Configure gptel with use-package, using GitHub Copilot as the model for responses
 (use-package gptel
