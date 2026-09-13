@@ -121,7 +121,7 @@
   ;; (add-to-list 'project-vc-root-markers ".git")
 
   ;; Define an explicit git-grep variant
-  (defun my-project-git-grep ()
+  (defun regolith/project-git-grep ()
     "Force project-find-regexp to use git grep, bypassing ripgrep."
     (interactive)
     (let ((xref-search-program 'grep))
@@ -136,7 +136,7 @@
   ;; 6. Map the two different keys into your project-prefix-map
   (:map project-prefix-map
         ;; ("g" . project-find-regexp)      ; Default (Uses fast ripgrep if available)
-        ("G" . my-project-git-grep)))    ; Explicit (Forces git grep)
+        ("G" . regolith/project-git-grep)))    ; Explicit (Forces git grep)
 
 (use-package xref
   :ensure nil
@@ -268,7 +268,7 @@
   :if (system-type-is-gnu)
 
   :init
-  (defun my/magit-refresh-local-status-on-save ()
+  (defun regolith/magit-refresh-local-status-on-save ()
     "Refresh the `magit-status' buffer when a local file is saved.
 This function safely ignores remote files handled via TRAMP to
 prevent network latency issues."
@@ -277,7 +277,7 @@ prevent network latency issues."
       (magit-after-save-refresh-status)))
 
   :hook
-  (after-save . my/magit-refresh-local-status-on-save))
+  (after-save . regolith/magit-refresh-local-status-on-save))
 
 (use-package git-gutter-fringe
   :ensure t
@@ -360,7 +360,7 @@ prevent network latency issues."
 (use-package pulse
   :ensure nil
   :config
-  (defun my/pulse-entire-buffer ()
+  (defun regolith/pulse-entire-buffer ()
     "Highlight the current buffer to emphasise it."
     (with-current-buffer (current-buffer)
       (pulse-momentary-highlight-region (point-min) (point-max)))))
@@ -386,15 +386,15 @@ prevent network latency issues."
   ;; However, it might have a performance impact.
 
   :config
-  (defun my/restclient-mode-hook ()
+  (defun regolith/restclient-mode-hook ()
     "Ensure we have nice indentation of JSON"
     ;; Does this need to require 'js' first?
     (setq-local indent-line-function 'js-indent-line))
 
   :hook
   ((restclient-mode . rainbow-delimiters-mode)
-   (restclient-mode . my/restclient-mode-hook)
-   (restclient-response-loaded . my/pulse-entire-buffer)))
+   (restclient-mode . regolith/restclient-mode-hook)
+   (restclient-response-loaded . regolith/pulse-entire-buffer)))
 
 (use-package restclient
   :ensure t
@@ -418,14 +418,14 @@ prevent network latency issues."
   :bind (:map restclient-mode-map
               ("C-c C-j" . restclient-jq-interactive-result))
   :config
-  (defun my/restclient-jq-inhibit-read-only (orig-fun &rest args)
+  (defun regolith/restclient-jq-inhibit-read-only (orig-fun &rest args)
     "Wrap restclient-jq to bypass the read-only buffer restriction.
 Don't know when this started being a problem, but 'view-mode' seems to
 get activated now making it read-only."
     (let ((inhibit-read-only t))
       (apply orig-fun args)))
 
-  (advice-add 'restclient-jq-interactive-result :around #'my/restclient-jq-inhibit-read-only))
+  (advice-add 'restclient-jq-interactive-result :around #'regolith/restclient-jq-inhibit-read-only))
 
 ;; company-restclient is not amenable to wrapping by
 ;; cape-company-to-capf, so we create our own completion-at-point
@@ -436,11 +436,11 @@ get activated now making it read-only."
 (use-package know-your-http-well
   :ensure t
   :config
-  (defun mantle-http--get-notes (cand alist)
+  (defun mantle/http--get-notes (cand alist)
     "Extract documentation list for CAND from ALIST using case-insensitive match."
     (cadr (assoc-string cand alist t)))
 
-  (defun mantle-http--adjust-case (typed inserted)
+  (defun mantle/http--adjust-case (typed inserted)
     "Adjust INSERTED string to match the case style of TYPED."
     (cond
      ((string-equal typed (upcase typed))
@@ -449,9 +449,9 @@ get activated now making it read-only."
       (capitalize inserted))
      (t (downcase inserted))))
 
-  (defun mantle-http--make-completion-table (alist typed)
+  (defun mantle/http--make-completion-table (alist typed)
     "Return a completion table for ALIST with candidates formatted to match TYPED casing."
-    (let ((cands (mapcar (lambda (key) (mantle-http--adjust-case typed key))
+    (let ((cands (mapcar (lambda (key) (mantle/http--adjust-case typed key))
                          (mapcar #'car alist))))
       (lambda (string pred action)
         (let ((completion-ignore-case t))
@@ -460,11 +460,11 @@ get activated now making it read-only."
                 (category . http-well)
                 (annotation-function
                  . ,(lambda (cand)
-                      (when-let ((notes (mantle-http--get-notes cand alist)))
+                      (when-let ((notes (mantle/http--get-notes cand alist)))
                         (concat " — " (car notes))))))
             (complete-with-action action cands string pred))))))
 
-  (defun mantle-http--make-capf (alist-var kind prefix-re interactive)
+  (defun mantle/http--make-capf (alist-var kind prefix-re interactive)
     "Return or invoke a Capf for ALIST-VAR with KIND annotation and PREFIX-RE filter."
     (let ((capf (lambda ()
                   (when (or (not prefix-re)
@@ -476,13 +476,13 @@ get activated now making it read-only."
                            (typed (buffer-substring-no-properties start end))
                            (alist (symbol-value alist-var)))
                       (list start end
-                            (mantle-http--make-completion-table alist typed)
+                            (mantle/http--make-completion-table alist typed)
                             :exclusive 'no
                             :company-kind (lambda (_) kind)
                             :company-doc-buffer
                             (lambda (cand)
-                              (when-let ((notes (mantle-http--get-notes cand alist)))
-                                (with-current-buffer (get-buffer-create " *mantle-http-doc*")
+                              (when-let ((notes (mantle/http--get-notes cand alist)))
+                                (with-current-buffer (get-buffer-create " *mantle/http-doc*")
                                   (erase-buffer)
                                   (insert (string-join notes "\n\n"))
                                   (current-buffer))))))))))
@@ -490,42 +490,42 @@ get activated now making it read-only."
           (cape-interactive capf)
         (funcall capf))))
 
-  (defun mantle-http-headers-capf (&optional interactive)
+  (defun mantle/http-headers-capf (&optional interactive)
     "Capf for HTTP headers."
     (interactive (list t))
-    (mantle-http--make-capf 'http-headers 'property "^[a-zA-Z0-9-]*$" interactive))
+    (mantle/http--make-capf 'http-headers 'property "^[a-zA-Z0-9-]*$" interactive))
 
-  (defun mantle-http-methods-capf (&optional interactive)
+  (defun mantle/http-methods-capf (&optional interactive)
     "Capf for HTTP methods."
     (interactive (list t))
-    (mantle-http--make-capf 'http-methods 'function "^[a-zA-Z]*$" interactive))
+    (mantle/http--make-capf 'http-methods 'function "^[a-zA-Z]*$" interactive))
 
-  (defun mantle-http-status-capf (&optional interactive)
+  (defun mantle/http-status-capf (&optional interactive)
     "Capf for HTTP status codes."
     (interactive (list t))
-    (mantle-http--make-capf 'http-status 'enum-member "^[0-9]*$" interactive))
+    (mantle/http--make-capf 'http-status 'enum-member "^[0-9]*$" interactive))
 
   ;; Combined super Capf strictly for know-your-http-well
-  (defalias 'mantle-http-super-capf
+  (defalias 'mantle/http-super-capf
     (cape-capf-super
-     #'mantle-http-headers-capf
-     #'mantle-http-methods-capf
-     #'mantle-http-status-capf))
+     #'mantle/http-headers-capf
+     #'mantle/http-methods-capf
+     #'mantle/http-status-capf))
 
-  (defun mantle-http-setup-completion ()
+  (defun mantle/http-setup-completion ()
     "Setup HTTP completion at point for restclient-mode buffers."
     (add-hook 'completion-at-point-functions
-              #'mantle-http-super-capf nil t))
+              #'mantle/http-super-capf nil t))
 
   ;; (0 -1) means append end of the 0th row
-  (transient-append-suffix 'regolith-mantle '(0 -1)
+  (transient-append-suffix 'regolith/mantle '(0 -1)
     '["HTTP & Web"
-      ("H" "HTTP Headers" mantle-http-headers-capf)
-      ("M" "HTTP Methods" mantle-http-methods-capf)
-      ("S" "HTTP Status Codes" mantle-http-status-capf)])
+      ("H" "HTTP Headers" mantle/http-headers-capf)
+      ("M" "HTTP Methods" mantle/http-methods-capf)
+      ("S" "HTTP Status Codes" mantle/http-status-capf)])
 
   :hook
-  (restclient-mode . mantle-http-setup-completion))
+  (restclient-mode . mantle/http-setup-completion))
 
 ;; See also the counsel-jq package; the restclient jq support is
 ;; probably similar enough I don't need it though.
@@ -678,7 +678,7 @@ get activated now making it read-only."
         ("C-c c" . copilot-menu))
 
   :config
-  (defface my/copilot-chat-user-heading
+  (defface regolith/copilot-chat-user-heading
     '((t (:inherit org-level-1
                    :foreground "#8be9fd"
                    :background "#20343a"
@@ -687,7 +687,7 @@ get activated now making it read-only."
     "Face used for user headings in Copilot Chat."
     :group 'copilot-chat)
 
-  (defface my/copilot-chat-assistant-heading
+  (defface regolith/copilot-chat-assistant-heading
     '((t (:inherit org-level-2
                    :foreground "#50fa7b"
                    :background "#203a2a"
@@ -696,7 +696,7 @@ get activated now making it read-only."
     "Face used for Copilot headings in Copilot Chat."
     :group 'copilot-chat)
 
-  (defun my/copilot-chat-add-gutters (limit)
+  (defun regolith/copilot-chat-add-gutters (limit)
     "Add VS Code-like coloured gutter markers to Copilot Chat headings."
     (when (re-search-forward "^\\*\\*? \\(You\\|Copilot\\)$" limit t)
       (let* ((assistant (equal (match-string-no-properties 1) "Copilot"))
@@ -705,8 +705,8 @@ get activated now making it read-only."
                           (if assistant "   " "   ") ;; Should have nerd-fonts installed for these to work, otherwise fallback to text.
                         (if assistant "  [A] " "  [U] "))
                       'face (if assistant
-                                'my/copilot-chat-assistant-heading
-                              'my/copilot-chat-user-heading)))
+                                'regolith/copilot-chat-assistant-heading
+                              'regolith/copilot-chat-user-heading)))
              (beg (line-beginning-position))
              (end (line-end-position)))
         (add-text-properties
@@ -715,18 +715,18 @@ get activated now making it read-only."
                        wrap-prefix ,prefix)))
       t))
 
-  (defun my/copilot-chat-style-headings ()
+  (defun regolith/copilot-chat-style-headings ()
     "Style user and assistant headings in Copilot Chat."
     (font-lock-add-keywords
      nil
-     '(("^\\* You$" . 'my/copilot-chat-user-heading)
-       ("^\\*\\* Copilot$" . 'my/copilot-chat-assistant-heading)
-       (my/copilot-chat-add-gutters))
+     '(("^\\* You$" . 'regolith/copilot-chat-user-heading)
+       ("^\\*\\* Copilot$" . 'regolith/copilot-chat-assistant-heading)
+       (regolith/copilot-chat-add-gutters))
      'append)
     (font-lock-flush)
     (font-lock-ensure))
   :hook
-  (copilot-chat-mode . my/copilot-chat-style-headings))
+  (copilot-chat-mode . regolith/copilot-chat-style-headings))
 
 ;; Configure gptel with use-package, using GitHub Copilot as the model for responses
 (use-package gptel

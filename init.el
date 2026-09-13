@@ -217,7 +217,7 @@ If the new path's directories does not exist, create them."
   (speedrect-mode t)
   :config
   ;; Close SpeedRect's help buffers when exiting rectangle-mark-mode
-  (defun my/speedrect-close-help-on-rectangle-exit ()
+  (defun regolith/speedrect-close-help-on-rectangle-exit ()
     "If the SpeedRect help buffer exists, close it when leaving `rectangle-mark-mode'."
     (when (not rectangle-mark-mode)
       (let ((buf (get-buffer "SpeedRect Command Key Help")))
@@ -229,7 +229,7 @@ If the new path's directories does not exist, create them."
               ;; Otherwise just kill the buffer
               (kill-buffer buf)))))))
   :hook
-  (rectangle-mark-mode-hook . my/speedrect-close-help-on-rectangle-exit))
+  (rectangle-mark-mode-hook . regolith/speedrect-close-help-on-rectangle-exit))
 
 ;; Modify search results en masse
 (use-package wgrep
@@ -292,7 +292,7 @@ If the new path's directories does not exist, create them."
 (load-file (expand-file-name "extras/dev.el" user-emacs-directory))
 
 ;; Work-specific configuration (if any)
-(regolith-load-work-file "init.el")
+(regolith/load-work-file "init.el")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

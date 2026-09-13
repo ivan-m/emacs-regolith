@@ -282,7 +282,7 @@
   :ensure t
   :bind*
   ;; All possible completion types; using this to ensure
-  (("M-/" . regolith-mantle))
+  (("M-/" . regolith/mantle))
 
   :custom
   (cape-dict-file
@@ -324,10 +324,10 @@
   ;;      any other planet.
   ;;      [PJC]
   ;;
-  ;; So regolith-mantle is the cape configuration for regolith.
+  ;; So regolith/mantle is the cape configuration for regolith.
   ;;
   ;; (I don't have too much time on my hands at all...)
-  (transient-define-prefix regolith-mantle ()
+  (transient-define-prefix regolith/mantle ()
     "Mantle: the Cape of a Regolith"
     [["Text & Documents"
       ("d" "Dabbrev"          cape-dabbrev)

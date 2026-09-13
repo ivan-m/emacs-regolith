@@ -82,10 +82,6 @@ _if_ they are available, then custom branch solely at work.
   - flymake instead of flycheck
 * Get eglot working (e.g. with Haskell) and see if I can get it to work with the AI stuff (e.g.
   Copilot)
-* Be consistent with naming conventions for functions and variables
-  - `regolith/` prefix for all functions and variables
-  - `regolith-work/` prefix for work-specific functions and variables
-  - `mantle/` prefix for the capf functionality
 * Check if jinx-mode + prog-mode is a good idea (e.g. for Haskell) or
   if I should just use it in text-mode
   - And once I'm happy with jinx, get rid of flyspell references.
