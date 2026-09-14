@@ -71,4 +71,18 @@ FILE is a filename (for example \"early-init.el\")."
                (file-exists-p path))
       (load-file path))))
 
+;; Explicit package archives set here so that it can be overridden
+;; later in the init process (for example, in work/early-init.el).
+(setq package-archives
+      '(("gnu"     . "https://elpa.gnu.org/packages/")
+        ("nongnu"  . "https://elpa.nongnu.org/nongnu/")   ;; official nonGNU
+        ("melpa"   . "https://melpa.org/packages/")))
+
+;; Sample values to use in work/early-init.el to override the default
+;; package archives Elpa is blocked but GitHub is not.
+;; (setq package-archives
+;;       '(("gnu"    . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/gnu/")
+;;         ("nongnu" . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/nongnu/")
+;;         ("melpa"  . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/melpa/")))
+
 (regolith/load-work-file "early-init.el")

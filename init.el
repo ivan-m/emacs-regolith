@@ -50,9 +50,7 @@
   (advice-add #'package--removable-packages :override
               (lambda (&rest _)
                 "Don't try and uninstall packages"
-                nil))
-
-  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
+                nil)))
 
 (defun system-type-is-darwin ()
   "Return t if system is darwin-based (macOS)."
