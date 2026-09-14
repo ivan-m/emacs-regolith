@@ -66,8 +66,6 @@ _if_ they are available, then custom branch solely at work.
     buffer; can use embark if I want a full buffer.  Let's see if
     that's better/easier to understand and less likely I'll use `C-g`.
 * Test the work stuff works
-* `tempel` has a list of template files to begin with, so in work mode
-  I can prepend a new set of templates to the list.
 * Consider these packages:
   - Different modeline settings:
     + mode-line-maker?

@@ -426,11 +426,9 @@
   :ensure t
   :after
   cape
-  ;; By default, tempel looks at the file "templates" in
-  ;; user-emacs-directory, but you can customize that with the
-  ;; tempel-path variable:
-  ;; :custom
-  ;; (tempel-path (concat user-emacs-directory "custom_template_file"))
+  :custom
+  ;; A list so we can add more template files in later on.
+  (tempel-path (list (concat user-emacs-directory "templates")))
   :bind (("M-*" . tempel-insert)
          ("M-+" . tempel-expand)
          :map tempel-map
