@@ -13,7 +13,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Save history of minibuffer
-(savehist-mode)
+(use-package savehist
+  :ensure nil
+  :custom
+  (savehist-file (no-littering-expand-var-file-name "history"))
+  :config
+  (savehist-mode))
 
 (setopt enable-recursive-minibuffers t)                ; Use the minibuffer whilst in the minibuffer
 
@@ -115,6 +120,7 @@
 
 (use-package embark-consult
   :ensure t
+  :demand t ;; Try and avoid annoying warnings about missing embark-consult
   :after
   (embark consult))
 

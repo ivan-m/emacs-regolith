@@ -66,8 +66,6 @@ _if_ they are available, then custom branch solely at work.
   - popper (make the Chat a popup?)
   - More/better gptel stuff
   - verb-mode instead of restclient
-  - no-littering
-    - Including auto-save-file-name-transforms for remote files.
   - flymake instead of flycheck
 * Get eglot working (e.g. with Haskell) and see if I can get it to work with the AI stuff (e.g.
   Copilot)

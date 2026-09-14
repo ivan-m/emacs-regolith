@@ -24,6 +24,24 @@
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Redirect the native-comp eln-cache out of the top-level directory
+;; and into var/, matching no-littering's convention. This has to
+;; happen before native-comp starts up, i.e. here in early-init.el,
+;; before no-littering itself is even loadable.
+(when (fboundp 'startup-redirect-eln-cache)
+  (startup-redirect-eln-cache
+   (convert-standard-filename
+    (expand-file-name "var/eln-cache/" user-emacs-directory))))
+
+;; Redirect package.el's package-user-dir (the "elpa" directory) out of
+;; the top-level directory and into var/, matching no-littering's
+;; convention. Must happen here (not in init.el/no-littering) because
+;; Emacs activates packages using this variable immediately after
+;; early-init.el loads, before init.el ever runs.
+(setq package-user-dir
+      (convert-standard-filename
+       (expand-file-name "var/elpa/" user-emacs-directory)))
+
 ;; Startup speed, annoyance suppression
 (setq bedrock--initial-gc-threshold gc-cons-threshold)
 (setq gc-cons-threshold 100000000)

@@ -52,6 +52,44 @@
                 "Don't try and uninstall packages"
                 nil)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;;   no-littering: keep user-emacs-directory tidy
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Must be set before no-littering is loaded. These are the defaults
+;; anyway; set explicitly for documentation purposes.
+(setq no-littering-etc-directory (expand-file-name "etc/" user-emacs-directory))
+(setq no-littering-var-directory (expand-file-name "var/" user-emacs-directory))
+
+(use-package no-littering
+  :ensure t
+  :config
+  ;; Redirect "#foo.txt#"-style auto-save files into var/auto-save/
+  ;; instead of littering next to the original file.
+  ;;
+  ;; Remote (TRAMP) files get their auto-saves stored locally (still
+  ;; distinguished by the original remote path) rather than the
+  ;; catch-all rule trying to write to a locally-mapped remote path.
+  (setq auto-save-file-name-transforms
+        `(("^/[^/]*:.*" ,(no-littering-expand-var-file-name "auto-save/tramp/") t)
+          (".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+
+  ;; Redirect auto-save-list/.saves-* files too.
+  (setq auto-save-list-file-prefix
+        (no-littering-expand-var-file-name "auto-save-list/.saves-"))
+
+  ;; Keep Custom's generated settings out of init.el entirely.
+  (setq custom-file (no-littering-expand-etc-file-name "custom.el"))
+  (load custom-file 'noerror))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;;   Helper functionality
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun system-type-is-darwin ()
   "Return t if system is darwin-based (macOS)."
   (eq system-type 'darwin))
@@ -74,11 +112,12 @@
 (global-auto-revert-mode)
 
 ;; Don't litter file system with *~ backup files; put them all inside
-;; ~/.emacs.d/backup or wherever
+;; var/backup/, preserving the original directory structure, via
+;; no-littering's helper.
 (defun bedrock--backup-file-name (fpath)
   "Return a new file path of a given file path.
 If the new path's directories does not exist, create them."
-  (let* ((backupRootDir (concat user-emacs-directory "emacs-backup/"))
+  (let* ((backupRootDir (no-littering-expand-var-file-name "backup/"))
          (filePath (replace-regexp-in-string "[A-Za-z]:" "" fpath )) ; remove Windows driver letter in path
          (backupFilePath (replace-regexp-in-string "//" "/" (concat backupRootDir filePath "~") )))
     (make-directory (file-name-directory backupFilePath) (file-name-directory backupFilePath))
@@ -86,7 +125,6 @@ If the new path's directories does not exist, create them."
 
 (setopt
  make-backup-file-name-function 'bedrock--backup-file-name
- ;; TODO: auto-save-file-name-transforms, especially for remote files, to avoid creating auto-save files on remote hosts
  backup-by-copying t
  delete-old-versions t)
 
@@ -96,8 +134,8 @@ If the new path's directories does not exist, create them."
 ;; use the following configuration:
 ;; (Run `'M-x describe-variable RET backup-directory-alist RET' for more help)
 ;;
-;; (let ((backup-dir (expand-file-name "emacs-backup/" user-emacs-directory)))
-;;   (setopt backup-directory-alist `(("." . ,backup-dir))))
+;; (setopt backup-directory-alist
+;;         `(("." . ,(no-littering-expand-var-file-name "backup/"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -174,7 +212,8 @@ If the new path's directories does not exist, create them."
   (tramp-default-method "ssh")
   ;; No backups or auto-saves for remote files, especially when using sudo or su
   (tramp-backup-directory-alist nil)
-  (tramp-auto-save-directory nil))
+  (tramp-auto-save-directory nil)
+  (tramp-persistency-file-name (no-littering-expand-var-file-name "tramp/persistency.el")))
 
 (use-package dired
   :ensure nil
@@ -244,21 +283,24 @@ If the new path's directories does not exist, create them."
   ;; Needs to be done before it's started: https://www.emacswiki.org/emacs/RecentFiles#toc12
   (setopt recentf-auto-cleanup 'never)
   :custom
-  (recentf-save-file (locate-user-emacs-file "recentf"))
+  (recentf-save-file (no-littering-expand-var-file-name "recentf"))
   :config
   ;; Add more files; can't be in :custom because of self-reference.
   (setopt recentf-exclude
           (append recentf-exclude
-                  '("^/sudo:.*"
-                    "^/docker:.*"
-                    "COMMIT_EDITMSG\\'"
-                    ".*-autoloads\\.el\\'"
-                    "ido\\.last"
-                    "^recentf$"
-                    "[/\\]\\.elpa/"
-                    "\\.git/"
-                    "node_modules/"
-                    "\\.cache/")))
+                  (list "^/sudo:.*"
+                        "^/docker:.*"
+                        "COMMIT_EDITMSG\\'"
+                        ".*-autoloads\\.el\\'"
+                        "ido\\.last"
+                        "^recentf$"
+                        "[/\\]\\.elpa/"
+                        "\\.git/"
+                        "node_modules/"
+                        "\\.cache/"
+                        ;; Don't clutter recentf with no-littering's own files
+                        (regexp-quote no-littering-etc-directory)
+                        (regexp-quote no-littering-var-directory))))
 
   (recentf-mode 1)
   (add-hook 'kill-emacs-hook #'recentf-save-list)
@@ -267,7 +309,7 @@ If the new path's directories does not exist, create them."
 (use-package saveplace
   :ensure nil
   :custom
-  (save-place-file (locate-user-emacs-file "saveplace"))
+  (save-place-file (no-littering-expand-var-file-name "saveplace"))
   :config
   (save-place-mode 1))
 
@@ -291,24 +333,3 @@ If the new path's directories does not exist, create them."
 
 ;; Work-specific configuration (if any)
 (regolith/load-work-file "init.el")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;;   Built-in customization framework
-;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-
-(setq gc-cons-threshold (or bedrock--initial-gc-threshold 800000))

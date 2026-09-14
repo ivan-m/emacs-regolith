@@ -111,6 +111,9 @@
   ;; Optimize file search caching for large monorepos/submodule trees.
   (project-vc-extra-files-cache t)
 
+  ;; Keep the known-projects list out of the top-level directory.
+  (project-list-file (no-littering-expand-var-file-name "projects"))
+
   ;; Default interactive modeline
   (project-mode-line 'non-remote)
   ;; requires Emacs 31 to function properly; with Emacs 30 it acts as 't'.
