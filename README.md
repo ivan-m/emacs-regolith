@@ -58,13 +58,6 @@ _if_ they are available, then custom branch solely at work.
 
 ## TODO
 
-* There's an issue using consult instead of isearch where if I found
-  what I want and hit `C-g` to exit then the minibuffer full-screen
-  buffer stays up and I can't use windmove to switch to it (`C-o`
-  works though)
-  - Trying with it back to being in the minibuffer rather than a full
-    buffer; can use embark if I want a full buffer.  Let's see if
-    that's better/easier to understand and less likely I'll use `C-g`.
 * Test the work stuff works
 * Consider these packages:
   - Different modeline settings:
