@@ -681,53 +681,227 @@ get activated now making it read-only."
         ("C-c c" . copilot-menu))
 
   :config
-  (defface regolith/copilot-chat-user-heading
-    '((t (:inherit org-level-1
-                   :foreground "#8be9fd"
-                   :background "#20343a"
-                   :weight bold
-                   :extend t)))
-    "Face used for user headings in Copilot Chat."
+  (require 'cl-lib)
+  (require 'color)
+
+  ;; ------------------------------------------------------------------
+  ;; Faces
+  ;;
+  ;; The "You"/"Copilot" headings keep their native `org-level-1'/
+  ;; `org-level-2' look. The `success'/`error' theme colours are
+  ;; reserved for the small symbol prefix and fringe bar only, so they
+  ;; read as a strong, unambiguous role indicator without recolouring
+  ;; actual message text. Background shading is a very subtle tint
+  ;; derived from the heading colours, not from `success'/`error'.
+  ;; ------------------------------------------------------------------
+
+  (defun regolith/copilot-chat--blend-colors (color1 color2 alpha)
+    "Blend COLOR1 and COLOR2, weighting COLOR1 by ALPHA (0-1)."
+    (apply #'color-rgb-to-hex
+           (append
+            (cl-mapcar (lambda (a b) (+ (* a alpha) (* b (- 1 alpha))))
+                       (color-name-to-rgb color1)
+                       (color-name-to-rgb color2))
+            '(2))))
+
+  (defun regolith/copilot-chat--accent-color (face)
+    "Return a usable colour string for FACE's foreground."
+    (or (face-attribute face :foreground nil t)
+        (face-attribute 'default :foreground nil t)))
+
+  (defface regolith/copilot-chat-user-heading-face
+    '((t :inherit org-level-1 :weight bold :extend t))
+    "Face for \"You\" headings in Copilot Chat."
     :group 'copilot-chat)
 
-  (defface regolith/copilot-chat-assistant-heading
-    '((t (:inherit org-level-2
-                   :foreground "#50fa7b"
-                   :background "#203a2a"
-                   :weight bold
-                   :extend t)))
-    "Face used for Copilot headings in Copilot Chat."
+  (defface regolith/copilot-chat-assistant-heading-face
+    '((t :inherit org-level-2 :weight bold :extend t))
+    "Face for \"Copilot\" headings in Copilot Chat."
     :group 'copilot-chat)
 
-  (defun regolith/copilot-chat-add-gutters (limit)
-    "Add VS Code-like coloured gutter markers to Copilot Chat headings."
-    (when (re-search-forward "^\\*\\*? \\(You\\|Copilot\\)$" limit t)
+  (defface regolith/copilot-chat-user-accent-face
+    '((t nil))
+    "Accent face (symbol prefix + fringe bar) for \"You\" messages.
+Uses the theme's `success' colour, kept separate from any shading."
+    :group 'copilot-chat)
+
+  (defface regolith/copilot-chat-assistant-accent-face
+    '((t nil))
+    "Accent face (symbol prefix + fringe bar) for \"Copilot\" messages.
+Uses the theme's `error' colour, kept separate from any shading."
+    :group 'copilot-chat)
+
+  (defface regolith/copilot-chat-user-block-face
+    '((t :extend t))
+    "Face for the body of \"You\" messages in Copilot Chat."
+    :group 'copilot-chat)
+
+  (defface regolith/copilot-chat-assistant-block-face
+    '((t :extend t))
+    "Face for the body of \"Copilot\" messages in Copilot Chat."
+    :group 'copilot-chat)
+
+  (defun regolith/copilot-chat-refresh-faces (&rest _)
+    "Recompute Copilot Chat faces from the current theme.
+Safe to call whenever the theme changes."
+    (let* ((bg (face-attribute 'default :background nil t))
+           ;; Symbol-prefix / fringe accent colours: success/error, untouched.
+           (user-accent (regolith/copilot-chat--accent-color 'success))
+           (assistant-accent (regolith/copilot-chat--accent-color 'error))
+           ;; Shading tint colours: derived from the heading colours instead,
+           ;; so shading never shares a hue with the success/failure accents.
+           (user-tint (regolith/copilot-chat--accent-color 'org-level-1))
+           (assistant-tint (regolith/copilot-chat--accent-color 'org-level-2)))
+      (set-face-attribute 'regolith/copilot-chat-user-accent-face nil
+                          :foreground user-accent)
+      (set-face-attribute 'regolith/copilot-chat-assistant-accent-face nil
+                          :foreground assistant-accent)
+      ;; "You" gets a stronger tint than "Copilot" -- 0.05 read as
+      ;; essentially invisible against most themes.
+      (set-face-attribute 'regolith/copilot-chat-user-block-face nil
+                          :background (regolith/copilot-chat--blend-colors user-tint bg 0.14))
+      (set-face-attribute 'regolith/copilot-chat-assistant-block-face nil
+                          :background (regolith/copilot-chat--blend-colors assistant-tint bg 0.05))))
+
+  (regolith/copilot-chat-refresh-faces)
+  ;; Faces (and, via them, the fringe bitmap colour) are re-derived
+  ;; automatically whenever the theme changes.
+  (add-hook 'enable-theme-functions #'regolith/copilot-chat-refresh-faces)
+
+  ;; ------------------------------------------------------------------
+  ;; Fringe indicator
+  ;;
+  ;; A solid bar drawn in the actual fringe (not a text prefix) for
+  ;; every *visual* line of a message: right fringe for "You", left
+  ;; fringe for "Copilot" -- the VS Code / messaging-app look the user
+  ;; wants. It is supplied via `line-prefix'/`wrap-prefix' rather than
+  ;; a per-logical-line `before-string', because only `line-prefix'/
+  ;; `wrap-prefix' are re-rendered on every wrapped continuation row;
+  ;; a `before-string' only ever shows on a line's first visual row.
+  ;; ------------------------------------------------------------------
+
+  (defvar regolith/copilot-chat-fringe-bitmap-height 20
+    "Height, in pixels, of the Copilot Chat fringe bar bitmap.")
+
+  (ignore-errors
+    (define-fringe-bitmap 'regolith/copilot-chat-fringe-bar
+      (make-vector regolith/copilot-chat-fringe-bitmap-height #b01111100)
+      nil 8 'center))
+
+  (defun regolith/copilot-chat--fringe-string (side accent-face)
+    "Zero-width string that renders as a fringe bar on SIDE in ACCENT-FACE."
+    (propertize "x" 'display
+                (list side 'regolith/copilot-chat-fringe-bar accent-face)))
+
+  (defun regolith/copilot-chat--speaker-icon (limit)
+    "Add a fringe bar and a small speaker icon to \"You\"/\"Copilot\" headings."
+    (when (re-search-forward "^\\*\\{1,2\\} \\(You\\|Copilot\\)$" limit t)
       (let* ((assistant (equal (match-string-no-properties 1) "Copilot"))
-             (prefix (propertize
-                      (if (eq system-type 'gnu/linux)
-                          (if assistant "   " "   ") ;; Should have nerd-fonts installed for these to work, otherwise fallback to text.
-                        (if assistant "  [A] " "  [U] "))
-                      'face (if assistant
-                                'regolith/copilot-chat-assistant-heading
-                              'regolith/copilot-chat-user-heading)))
+             (side (if assistant 'left-fringe 'right-fringe))
+             (accent-face (if assistant
+                              'regolith/copilot-chat-assistant-accent-face
+                            'regolith/copilot-chat-user-accent-face))
+             ;; Same background tint as the message body, so the icon
+             ;; prefix isn't a "hole" in the shaded block. `line-prefix'/
+             ;; `wrap-prefix' strings render with their own face rather
+             ;; than the buffer's, so we have to attach it explicitly.
+             ;; A face *list* lets the accent face's foreground win while
+             ;; falling back to the block face's background.
+             (block-face (if assistant
+                             'regolith/copilot-chat-assistant-block-face
+                           'regolith/copilot-chat-user-block-face))
+             (icon-face (list accent-face block-face))
+             (icon-text (if (eq system-type 'gnu/linux)
+                            (if assistant "   " "   ") ;; requires nerd-fonts
+                          (if assistant "  [A] " "  [U] ")))
+             (prefix (concat
+                      (regolith/copilot-chat--fringe-string side accent-face)
+                      (propertize icon-text 'face icon-face)))
              (beg (line-beginning-position))
              (end (line-end-position)))
         (add-text-properties
          beg end
-         `(line-prefix ,prefix
-                       wrap-prefix ,prefix)))
+         `(line-prefix ,prefix wrap-prefix ,prefix)))
       t))
 
+  (defvar-local regolith/copilot-chat--block-overlays nil
+    "Overlays used to mark up Copilot Chat message blocks.")
+
+  (defvar-local regolith/copilot-chat--restyle-timer nil
+    "Idle timer used to debounce re-styling of the chat buffer.")
+
+  (defun regolith/copilot-chat--message-spans ()
+    "Return a list of (BEG END ASSISTANT-P) for each message in the buffer."
+    (let (spans cur-beg cur-assistant)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward "^\\*\\{1,2\\} \\(You\\|Copilot\\)$" nil t)
+          (when cur-beg
+            (push (list cur-beg (line-beginning-position) cur-assistant) spans))
+          (setq cur-beg (line-beginning-position)
+                cur-assistant (equal (match-string-no-properties 1) "Copilot")))
+        (when cur-beg
+          (push (list cur-beg (point-max) cur-assistant) spans)))
+      (nreverse spans)))
+
+  (defun regolith/copilot-chat-style-buffer ()
+    "(Re)apply background and fringe styling to entire message blocks."
+    (mapc #'delete-overlay regolith/copilot-chat--block-overlays)
+    (setq regolith/copilot-chat--block-overlays nil)
+    (pcase-dolist (`(,beg ,end ,assistant) (regolith/copilot-chat--message-spans))
+      (let* ((block-face (if assistant
+                             'regolith/copilot-chat-assistant-block-face
+                           'regolith/copilot-chat-user-block-face))
+             (accent-face (if assistant
+                              'regolith/copilot-chat-assistant-accent-face
+                            'regolith/copilot-chat-user-accent-face))
+             (side (if assistant 'left-fringe 'right-fringe))
+             (fringe-string (regolith/copilot-chat--fringe-string side accent-face))
+             ;; Start of the body, i.e. just past the heading line: the
+             ;; heading itself already gets its own fringe bar (plus the
+             ;; icon) from `regolith/copilot-chat--speaker-icon', so we
+             ;; must not clobber its `line-prefix' here.
+             (body-beg (save-excursion (goto-char beg) (forward-line 1) (point))))
+        ;; Subtle background tint across the whole block.
+        (let ((ov (make-overlay beg end)))
+          (overlay-put ov 'face block-face)
+          (overlay-put ov 'regolith/copilot-chat t)
+          (push ov regolith/copilot-chat--block-overlays))
+        ;; Fringe bar for every visual row of the body, including
+        ;; wrapped continuation rows (`wrap-prefix') as well as each
+        ;; logical line's own row (`line-prefix').
+        (when (< body-beg end)
+          (let ((ov (make-overlay body-beg end)))
+            (overlay-put ov 'line-prefix fringe-string)
+            (overlay-put ov 'wrap-prefix fringe-string)
+            (overlay-put ov 'regolith/copilot-chat t)
+            (push ov regolith/copilot-chat--block-overlays))))))
+
+  (defun regolith/copilot-chat--schedule-restyle (&rest _)
+    "Debounce a full re-style after buffer changes (e.g. streaming tokens)."
+    (when (timerp regolith/copilot-chat--restyle-timer)
+      (cancel-timer regolith/copilot-chat--restyle-timer))
+    (setq regolith/copilot-chat--restyle-timer
+          (run-with-idle-timer 0.2 nil
+                               (lambda (buf)
+                                 (when (buffer-live-p buf)
+                                   (with-current-buffer buf
+                                     (regolith/copilot-chat-style-buffer))))
+                               (current-buffer))))
+
   (defun regolith/copilot-chat-style-headings ()
-    "Style user and assistant headings in Copilot Chat."
+    "Style user and assistant messages in Copilot Chat."
     (font-lock-add-keywords
      nil
-     '(("^\\* You$" . 'regolith/copilot-chat-user-heading)
-       ("^\\*\\* Copilot$" . 'regolith/copilot-chat-assistant-heading)
-       (regolith/copilot-chat-add-gutters))
+     '(("^\\* You$" . 'regolith/copilot-chat-user-heading-face)
+       ("^\\*\\* Copilot$" . 'regolith/copilot-chat-assistant-heading-face)
+       (regolith/copilot-chat--speaker-icon))
      'append)
     (font-lock-flush)
-    (font-lock-ensure))
+    (font-lock-ensure)
+    (regolith/copilot-chat-style-buffer)
+    (add-hook 'after-change-functions #'regolith/copilot-chat--schedule-restyle nil t))
+
   :hook
   (copilot-chat-mode . regolith/copilot-chat-style-headings))
 
