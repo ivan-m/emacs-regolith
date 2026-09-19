@@ -112,7 +112,7 @@
   (project-vc-extra-files-cache t)
 
   ;; Keep the known-projects list out of the top-level directory.
-  (project-list-file (no-littering-expand-var-file-name "projects"))
+  (project-list-file (regolith/no-littering-var-file "projects"))
 
   ;; Default interactive modeline
   (project-mode-line 'non-remote)
@@ -245,7 +245,6 @@
   (auto-revert-buffer-list-filter 'magit-auto-revert-repository-buffer-p)
   (magit-delete-by-moving-to-trash nil)
   (magit-diff-refine-hunk t)
-  (magit-save-repository-buffers nil)
 
   ;; Defaults seem to be from 'magit-module-sections-hook'
   (magit-section-initial-visibility-alist

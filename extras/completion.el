@@ -16,7 +16,7 @@
 (use-package savehist
   :ensure nil
   :custom
-  (savehist-file (no-littering-expand-var-file-name "history"))
+  (savehist-file (regolith/no-littering-var-file "history"))
   :config
   (savehist-mode))
 

@@ -63,6 +63,19 @@
 (setq no-littering-etc-directory (expand-file-name "etc/" user-emacs-directory))
 (setq no-littering-var-directory (expand-file-name "var/" user-emacs-directory))
 
+;; Return no-littering path and ensure its parent directory exists.
+(defun regolith/no-littering-var-file (relative-path)
+  "Expand RELATIVE-PATH under no-littering var dir and ensure parent exists."
+  (let ((path (no-littering-expand-var-file-name relative-path)))
+    (make-directory (file-name-directory path) t)
+    path))
+
+(defun regolith/no-littering-etc-file (relative-path)
+  "Expand RELATIVE-PATH under no-littering etc dir and ensure parent exists."
+  (let ((path (no-littering-expand-etc-file-name relative-path)))
+    (make-directory (file-name-directory path) t)
+    path))
+
 (use-package no-littering
   :ensure t
   :config
@@ -73,15 +86,15 @@
   ;; distinguished by the original remote path) rather than the
   ;; catch-all rule trying to write to a locally-mapped remote path.
   (setq auto-save-file-name-transforms
-        `(("^/[^/]*:.*" ,(no-littering-expand-var-file-name "auto-save/tramp/") t)
-          (".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+        `(("^/[^/]*:.*" ,(regolith/no-littering-var-file "auto-save/tramp/") t)
+          (".*" ,(regolith/no-littering-var-file "auto-save/") t)))
 
   ;; Redirect auto-save-list/.saves-* files too.
   (setq auto-save-list-file-prefix
-        (no-littering-expand-var-file-name "auto-save-list/.saves-"))
+        (regolith/no-littering-var-file "auto-save-list/.saves-"))
 
   ;; Keep Custom's generated settings out of init.el entirely.
-  (setq custom-file (no-littering-expand-etc-file-name "custom.el"))
+  (setq custom-file (regolith/no-littering-etc-file "custom.el"))
   (load custom-file 'noerror))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -117,7 +130,7 @@
 (defun bedrock--backup-file-name (fpath)
   "Return a new file path of a given file path.
 If the new path's directories does not exist, create them."
-  (let* ((backupRootDir (no-littering-expand-var-file-name "backup/"))
+  (let* ((backupRootDir (regolith/no-littering-var-file "backup/"))
          (filePath (replace-regexp-in-string "[A-Za-z]:" "" fpath )) ; remove Windows driver letter in path
          (backupFilePath (replace-regexp-in-string "//" "/" (concat backupRootDir filePath "~") )))
     (make-directory (file-name-directory backupFilePath) (file-name-directory backupFilePath))
@@ -135,7 +148,7 @@ If the new path's directories does not exist, create them."
 ;; (Run `'M-x describe-variable RET backup-directory-alist RET' for more help)
 ;;
 ;; (setopt backup-directory-alist
-;;         `(("." . ,(no-littering-expand-var-file-name "backup/"))))
+;;         `(("." . ,(regolith/no-littering-var-file "backup/"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -213,7 +226,7 @@ If the new path's directories does not exist, create them."
   ;; No backups or auto-saves for remote files, especially when using sudo or su
   (tramp-backup-directory-alist nil)
   (tramp-auto-save-directory nil)
-  (tramp-persistency-file-name (no-littering-expand-var-file-name "tramp/persistency.el")))
+  (tramp-persistency-file-name (regolith/no-littering-var-file "tramp/persistency.el")))
 
 (use-package dired
   :ensure nil
@@ -283,7 +296,7 @@ If the new path's directories does not exist, create them."
   ;; Needs to be done before it's started: https://www.emacswiki.org/emacs/RecentFiles#toc12
   (setopt recentf-auto-cleanup 'never)
   :custom
-  (recentf-save-file (no-littering-expand-var-file-name "recentf"))
+  (recentf-save-file (regolith/no-littering-var-file "recentf"))
   :config
   ;; Add more files; can't be in :custom because of self-reference.
   (setopt recentf-exclude
@@ -309,7 +322,7 @@ If the new path's directories does not exist, create them."
 (use-package saveplace
   :ensure nil
   :custom
-  (save-place-file (no-littering-expand-var-file-name "saveplace"))
+  (save-place-file (regolith/no-littering-var-file "saveplace"))
   :config
   (save-place-mode 1))
 
