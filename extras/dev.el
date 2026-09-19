@@ -635,6 +635,9 @@ get activated now making it read-only."
   :after
   (embark project) ;; Internally depends upon project
   :custom
+  ;; https://github.com/copilot-emacs/copilot.el/issues/473
+  (copilot-chat-model "auto")
+
   (copilot-indent-offset-warning-disable t)
   (copilot-chat-enable-semantic-search t)
 
@@ -683,6 +686,7 @@ get activated now making it read-only."
   :config
   (require 'cl-lib)
   (require 'color)
+  (require 'org-faces)
 
   ;; ------------------------------------------------------------------
   ;; Faces
