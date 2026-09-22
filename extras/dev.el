@@ -602,6 +602,9 @@ get activated now making it read-only."
   :ensure t
   :if (system-type-is-gnu)
   :config
+  ;; nixfmt no longer accepts stdin by default
+  (setf (alist-get 'nixfmt apheleia-formatters)
+        '("nixfmt" "-"))
   ;; Allow overriding the formatters and mode-alist in local variables, so that
   ;; we can have project-specific formatters.
   (put 'apheleia-formatters 'safe-local-variable #'listp)
