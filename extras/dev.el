@@ -320,7 +320,7 @@ prevent network latency issues."
   "\\.csv\'")
 
 (use-package yaml-ts-mode
-  :ensure t
+  :ensure nil
   :mode "\\.ya?ml\\'")
 ;; Don't know if I need this yet.
 ;; :hook
@@ -328,7 +328,7 @@ prevent network latency issues."
 ;;                    (electric-indent-local-mode -1)))))
 
 (use-package json-ts-mode
-  :ensure t
+  :ensure nil
   :mode "\\.json\\'")
 
 (use-package nix-ts-mode

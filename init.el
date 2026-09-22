@@ -58,10 +58,12 @@
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Must be set before no-littering is loaded. These are the defaults
-;; anyway; set explicitly for documentation purposes.
-(setq no-littering-etc-directory (expand-file-name "etc/" user-emacs-directory))
-(setq no-littering-var-directory (expand-file-name "var/" user-emacs-directory))
+;; Must be set before no-littering is loaded.  Not using defaults to
+;; make it more compatible with being installed via home-manager.
+(let ((state-dir (or (getenv "XDG_STATE_HOME")
+                     (expand-file-name ".local/state" (getenv "HOME")))))
+  (setq no-littering-etc-directory (expand-file-name "emacs-state/etc/" state-dir))
+  (setq no-littering-var-directory (expand-file-name "emacs-state/var/" state-dir)))
 
 ;; Return no-littering path and ensure its parent directory exists.
 (defun regolith/no-littering-var-file (relative-path)
