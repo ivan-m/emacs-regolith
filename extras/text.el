@@ -57,7 +57,7 @@ Otherwise unfill the paragraph at point (detected robustly)."
   ;; It's slow to actually look words up though.
   (text-mode-hook . dictionary-tooltip-mode))
 
-(defun my/kill-line--remove-next-indentation (&rest _)
+(defun regolith/kill-line--remove-next-indentation (&rest _)
   "If at EOL (but not at BOL) remove leading whitespace on the next line.
 This runs before `kill-line` so the following line's indentation is removed
 without moving point."
@@ -66,7 +66,7 @@ without moving point."
       (forward-char 1)
       (delete-horizontal-space))))
 
-(advice-add 'kill-line :before #'my/kill-line--remove-next-indentation)
+(advice-add 'kill-line :before #'regolith/kill-line--remove-next-indentation)
 
 ;; Select a region, then type over it to replace it.
 (setopt delete-selection-mode t)
@@ -112,7 +112,7 @@ without moving point."
   (add-to-list 'markdown-code-lang-modes '("json" . json-ts-mode))
 
   ;; Define a rule that lets completion try first if we are typing text
-  (defun my/markdown-cycle-allow-completion (orig-fun &rest args)
+  (defun regolith/markdown-cycle-allow-completion (orig-fun &rest args)
     "Let `completion-at-point` step in if the cursor is directly next to text."
     (if (and (not (bolp))                        ; Not at the start of a line
              (not (looking-back "^[ \t]*" nil))  ; Not pure indentation whitespace
@@ -124,7 +124,7 @@ without moving point."
       (apply orig-fun args)))
 
   ;; Apply the advice to intercept markdown-cycle dynamically
-  (advice-add 'markdown-cycle :around #'my/markdown-cycle-allow-completion)
+  (advice-add 'markdown-cycle :around #'regolith/markdown-cycle-allow-completion)
   :init
   (defun regolith/disable-electric-indent ()
     (electric-indent-local-mode -1))
@@ -139,15 +139,16 @@ without moving point."
   :ensure t)
 
 (use-package org-table
-  ;; Use the version that ships with Emacs
+  ;; Use the version that ships with Emacs, not the one from ELPA.
   :ensure nil
   :config
-
-  (defun my/markdown-enable-orgtbl ()
+  (defun regolith/markdown-enable-orgtbl ()
     "Enable orgtbl in this buffer and disable orgtbl's C-c C-c here.
-The magic orgtbl-ctrl-c-ctrl-c blocks the C-c C-c prefix for
-markdown-mode commands, so we need to disable it."
+This is necessary because orgtbl-mode's C-c C-c keybinding overrides the
+markdown-mode keymap, which breaks the ability to use C-c C-c for
+markdown commands."
     (turn-on-orgtbl)
+
     ;; From https://stackoverflow.com/a/26297700
     ;;
     ;; Converts org-mode tables to markdown tables (which org-mode can still deal with).
@@ -156,15 +157,18 @@ markdown-mode commands, so we need to disable it."
         (goto-char (point-min))
         (while (search-forward "-+-" nil t) (replace-match "-|-"))))
 
+    ;; Create an overriding map that INHERITS from orgtbl-mode-map.
+    ;; This keeps the Tbl menu definition intact while letting you mask C-c C-c.
     (let ((m (make-sparse-keymap)))
+      (set-keymap-parent m orgtbl-mode-map)
       (define-key m (kbd "C-c C-c") nil)
       (setq-local minor-mode-overriding-map-alist
                   (cons (cons 'orgtbl-mode m)
                         (assq-delete-all 'orgtbl-mode minor-mode-overriding-map-alist))))
 
-    (add-hook 'after-save-hook 'cleanup-org-tables  nil 'make-it-local))
+    (add-hook 'after-save-hook 'cleanup-org-tables nil 'make-it-local))
   :hook
-  ((markdown-mode . my/markdown-enable-orgtbl)))
+  ((markdown-mode . regolith/markdown-enable-orgtbl)))
 
 (use-package pandoc-mode
   :ensure t
