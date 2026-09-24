@@ -136,6 +136,7 @@
   :custom
   (vertico-cycle t) ;; Cycle through candidates
   (vertico-resize t)
+  (vertico-sort-function #'vertico-sort-alpha) ; avoid history-based bias
   :init
   (vertico-mode))
 
@@ -357,7 +358,8 @@
 (use-package orderless
   :ensure t
   :custom
-  (completion-styles '(orderless basic))
+  ;; Prefer prefix matches first; keep orderless as a fallback for fuzzy matches.
+  (completion-styles '(basic partial-completion orderless))
   (completion-category-overrides '((file (styles partial-completion orderless basic))))
   (completion-pcm-leading-wildcard t)
   (read-file-name-completion-ignore-case t))
