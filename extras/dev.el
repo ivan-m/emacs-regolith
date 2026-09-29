@@ -377,6 +377,9 @@ prevent network latency issues."
 
 (use-package restclient
   :ensure t
+  :custom
+  (restclient-enable-eval t)
+  (restclient-results-in-view-mode nil)
   :mode
   ("\\.http\\'" . restclient-mode)
   ("\\.rest\\'" . restclient-mode)
@@ -412,22 +415,15 @@ prevent network latency issues."
   :mode
   "\\.jq$")
 
+;; This requires restclient-results-in-view-mode to be nil, which is
+;; the default in this config.
 (use-package restclient-jq
   :ensure t
   :after
   restclient
   :demand t ;; Load as soon as restclient does
   :bind (:map restclient-mode-map
-              ("C-c C-j" . restclient-jq-interactive-result))
-  :config
-  (defun regolith/restclient-jq-inhibit-read-only (orig-fun &rest args)
-    "Wrap restclient-jq to bypass the read-only buffer restriction.
-Don't know when this started being a problem, but 'view-mode' seems to
-get activated now making it read-only."
-    (let ((inhibit-read-only t))
-      (apply orig-fun args)))
-
-  (advice-add 'restclient-jq-interactive-result :around #'regolith/restclient-jq-inhibit-read-only))
+              ("C-c C-j" . restclient-jq-interactive-result)))
 
 ;; company-restclient is not amenable to wrapping by
 ;; cape-company-to-capf, so we create our own completion-at-point
