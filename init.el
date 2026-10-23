@@ -63,7 +63,11 @@
 (let ((state-dir (or (getenv "XDG_STATE_HOME")
                      (expand-file-name ".local/state" (getenv "HOME")))))
   (setq no-littering-etc-directory (expand-file-name "emacs-state/etc/" state-dir))
-  (setq no-littering-var-directory (expand-file-name "emacs-state/var/" state-dir)))
+  (setq no-littering-var-directory (expand-file-name "emacs-state/var/" state-dir))
+  (setq package-user-dir (expand-file-name "elpa/" no-littering-var-directory))
+  (setq package-vc-selected-packages-file (expand-file-name "package-vc-selected-packages.el" no-littering-var-directory))
+  ;; Must be a list, not a string path
+  (setq package-vc-selected-packages nil))
 
 ;; Return no-littering path and ensure its parent directory exists.
 (defun regolith/no-littering-var-file (relative-path)
