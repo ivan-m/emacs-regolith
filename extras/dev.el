@@ -218,12 +218,12 @@
   (imenu-auto-rescan t)
   :config
   ;; from http://www.emacswiki.org/cgi-bin/wiki/ImenuMode
-  (defun try-to-add-imenu ()
+  (defun regolith/try-to-add-imenu ()
     (condition-case nil (imenu-add-menubar-index) (error nil)))
   :after consult
   :bind (("C-c i" . consult-imenu))
   :hook
-  ((prog-mode . try-to-add-imenu)))
+  ((prog-mode . regolith/try-to-add-imenu)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -697,7 +697,7 @@ prevent network latency issues."
   ;; derived from the heading colours, not from `success'/`error'.
   ;; ------------------------------------------------------------------
 
-  (defun regolith/copilot-chat--blend-colors (color1 color2 alpha)
+  (defun regolith/copilot-chat--blend-colors (COLOR1 COLOR2 ALPHA)
     "Blend COLOR1 and COLOR2, weighting COLOR1 by ALPHA (0-1)."
     (apply #'color-rgb-to-hex
            (append
@@ -706,7 +706,7 @@ prevent network latency issues."
                        (color-name-to-rgb color2))
             '(2))))
 
-  (defun regolith/copilot-chat--accent-color (face)
+  (defun regolith/copilot-chat--accent-color (FACE)
     "Return a usable colour string for FACE's foreground."
     (or (face-attribute face :foreground nil t)
         (face-attribute 'default :foreground nil t)))
@@ -790,7 +790,7 @@ Safe to call whenever the theme changes."
       (make-vector regolith/copilot-chat-fringe-bitmap-height #b01111100)
       nil 8 'center))
 
-  (defun regolith/copilot-chat--fringe-string (side accent-face)
+  (defun regolith/copilot-chat--fringe-string (SIDE ACCENT-FACE)
     "Zero-width string that renders as a fringe bar on SIDE in ACCENT-FACE."
     (propertize "x" 'display
                 (list side 'regolith/copilot-chat-fringe-bar accent-face)))

@@ -152,7 +152,7 @@ markdown commands."
     ;; From https://stackoverflow.com/a/26297700
     ;;
     ;; Converts org-mode tables to markdown tables (which org-mode can still deal with).
-    (defun cleanup-org-tables ()
+    (defun regolith/cleanup-org-tables ()
       (save-excursion
         (goto-char (point-min))
         (while (search-forward "-+-" nil t) (replace-match "-|-"))))
@@ -166,7 +166,7 @@ markdown commands."
                   (cons (cons 'orgtbl-mode m)
                         (assq-delete-all 'orgtbl-mode minor-mode-overriding-map-alist))))
 
-    (add-hook 'after-save-hook 'cleanup-org-tables nil 'make-it-local))
+    (add-hook 'after-save-hook 'regolith/cleanup-org-tables nil 'make-it-local))
   :hook
   ((markdown-mode . regolith/markdown-enable-orgtbl)))
 

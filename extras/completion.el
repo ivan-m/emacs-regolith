@@ -448,12 +448,12 @@
   :init
   ;; Make a function that adds the tempel expansion function to the
   ;; list of completion-at-point-functions (capf).
-  (defun tempel-setup-capf ()
+  (defun regolith/tempel-setup-capf ()
     ;; tempel-complete allows completion/listing of templates,
     ;; tempel-expand just instant replaces.
     (add-hook 'completion-at-point-functions #'tempel-complete -1 'local))
 
   ;; Put tempel-expand on the list whenever you start programming or
   ;; writing prose.
-  (add-hook 'prog-mode-hook 'tempel-setup-capf)
-  (add-hook 'text-mode-hook 'tempel-setup-capf))
+  (add-hook 'prog-mode-hook 'regolith/tempel-setup-capf)
+  (add-hook 'text-mode-hook 'regolith/tempel-setup-capf))
