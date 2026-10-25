@@ -68,7 +68,6 @@
      (json-mode . json-ts-mode)
      (css-mode . css-ts-mode)
      (python-mode . python-ts-mode)
-     (haskell-mode . haskell-ts-mode)
      (nix-mode . nix-ts-mode)))
   )
 
@@ -340,15 +339,15 @@ prevent network latency issues."
 ;;   :ensure t
 ;;   :commands ivy-nixos-options)
 
-(use-package haskell-ts-mode
+(use-package haskell-mode
   :ensure t
-  ;; Not actually shown, but for when it works: https://github.com/abidanBrito/sleek-modeline/issues/12
-  :delight (haskell-ts-mode "Haskell" :major)
+  :diminish
+  haskell-doc-mode
   :custom
-  ;; May be broken
-  (haskell-ts-use-indent t)
-  (haskell-ts-font-lock-level 4)
-  :mode "\\.hs\\'")
+  (haskell-completing-read-function 'completing-read)
+  :mode
+  ("\\.hs\\'" . haskell-mode)
+  ("\\.lhs\\'" . literate-haskell-mode))
 
 ;; Enable cabal-mode for .cabal files
 (use-package cabal-mode
