@@ -919,3 +919,13 @@ Safe to call whenever the theme changes."
   (:map gptel-chat-mode-map
         ("C-c C-s" . gptel-chat-send-region)
         ("C-c C-f" . gptel-chat-send-file)))
+
+(use-package agent-shell
+  :ensure t
+  :custom
+  ;; Already using this in the copilot.el package, but we can also use
+  ;; it here for agent-shell rather than the default `copilot` cli
+  ;; (which is useful in cases where API-based Copilot calls are
+  ;; permitted but CLI is not, such as in some enterprise
+  ;; environments).
+  (agent-shell-github-acp-command '("copilot-language-server" "--acp")))
