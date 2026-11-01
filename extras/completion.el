@@ -136,9 +136,25 @@
   :custom
   (vertico-cycle t) ;; Cycle through candidates
   (vertico-resize t)
-  (vertico-sort-function #'vertico-sort-alpha) ; avoid history-based bias
+  (vertico-sort-function #'regolith/vertico-sort-prefix-first)
   :init
-  (vertico-mode))
+  (vertico-mode)
+  :config
+  (defun regolith/vertico-sort-prefix-first (candidates)
+    "Sort CANDIDATES with those starting with the current input first.
+Within each group, use Vertico's history/length/alphabetical order.
+For file names, only the last path component is considered."
+    (let* ((input (minibuffer-contents-no-properties))
+           (input (if minibuffer-completing-file-name
+                      (file-name-nondirectory input)
+                    input))
+           (sorted (vertico-sort-history-length-alpha candidates)))
+      (if (string-empty-p input)
+          sorted
+        (let ((prefixp (lambda (c)
+                         (string-prefix-p input c completion-ignore-case))))
+          (nconc (seq-filter prefixp sorted)
+                 (seq-remove prefixp sorted)))))))
 
 ;; Vertico directory extension: makes DEL/Backspace behave like ido (go up dir),
 ;; provides tidy behaviour and entry for RET on directories.
@@ -354,15 +370,22 @@
       ("x" "TeX / LaTeX"          cape-tex)
       ("r" "RFC 1345 Mnemonics"   cape-rfc1345)]]))
 
-;; Orderless: powerful completion style
 (use-package orderless
   :ensure t
   :custom
-  ;; Prefer prefix matches first; keep orderless as a fallback for fuzzy matches.
-  (completion-styles '(basic partial-completion orderless))
-  (completion-category-overrides '((file (styles partial-completion orderless basic))))
-  (completion-pcm-leading-wildcard t)
-  (read-file-name-completion-ignore-case t))
+  (completion-styles '(orderless-with-prefix basic))
+  (completion-category-defaults nil) ; don't let per-category defaults bypass our style
+  (completion-ignore-case t)
+  (read-buffer-completion-ignore-case t)
+  (read-file-name-completion-ignore-case t)
+
+  :config
+  ;; Custom style using orderless matching, with flex so that typed
+  ;; letters match anywhere in order.  The macro is only available
+  ;; once orderless is loaded, hence :config rather than :init.
+  (orderless-define-completion-style orderless-with-prefix
+    (orderless-matching-styles '(orderless-literal orderless-flex orderless-initialism orderless-regexp))))
+
 ;; Emacs 31: partial-completion behaves like substring
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
