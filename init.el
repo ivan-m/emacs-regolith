@@ -52,6 +52,13 @@
                 "Don't try and uninstall packages"
                 nil)))
 
+(with-eval-after-load 'package-vc
+  (advice-add #'customize-save-variable :around
+              (lambda (orig variable &rest args)
+                "Don't persist `package-vc-selected-packages'."
+                (unless (eq variable 'package-vc-selected-packages)
+                  (apply orig variable args)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;;   no-littering: keep user-emacs-directory tidy
@@ -65,9 +72,14 @@
   (setq no-littering-etc-directory (expand-file-name "emacs-state/etc/" state-dir))
   (setq no-littering-var-directory (expand-file-name "emacs-state/var/" state-dir))
   (setq package-user-dir (expand-file-name "elpa/" no-littering-var-directory))
-  (setq package-vc-selected-packages-file (expand-file-name "package-vc-selected-packages.el" no-littering-var-directory))
   ;; Must be a list, not a string path
   (setq package-vc-selected-packages nil))
+
+;; Get :vc-installed packages to work and be picked up so they dont'
+;; try and get re-installed on every startup.
+(require 'package)
+(unless package--initialized
+  (package-initialize))
 
 ;; Return no-littering path and ensure its parent directory exists.
 (defun regolith/no-littering-var-file (relative-path)

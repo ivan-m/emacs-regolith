@@ -696,10 +696,92 @@ prevent network latency issues."
 
 (use-package agent-shell
   :ensure t
+  :init
+  (require 'cl-lib)
+  (defvar regolith/agent-shell-manager-directory nil
+    "Project directory from which the agent-shell manager was opened.")
+  (defun regolith/agent-shell-new-with-purpose (start &rest args)
+    "Prompt for a purpose before calling START to create a new agent shell.
+An empty purpose keeps `agent-shell' buffer naming unchanged."
+    (let ((purpose (read-string "Session purpose (RET for default): ")))
+      (if (string-empty-p purpose)
+          (apply start args)
+        (let* ((original-format agent-shell-buffer-name-format)
+               (agent-shell-buffer-name-format
+                (lambda (agent-name _project-name)
+                  (if (functionp original-format)
+                      (funcall original-format agent-name purpose)
+                    (let ((agent-shell-buffer-name-format original-format))
+                      (agent-shell--format-buffer-name agent-name purpose))))))
+          (apply start args)))))
+  (defun regolith/agent-shell-manager-new (start &rest args)
+    "Prompt for a purpose and make START reliably create a new shell.
+The manager passes t to `agent-shell', but `agent-shell' expects the
+universal-prefix representation (4) to force a new shell."
+    (let ((agent-shell-function (symbol-function 'agent-shell)))
+      (let ((default-directory
+             (or regolith/agent-shell-manager-directory default-directory))
+            (agent-shell-context-sources nil))
+        (cl-letf (((symbol-function 'agent-shell)
+                   (lambda (&optional arg)
+                     (funcall agent-shell-function
+                              (if (eq arg t) '(4) arg)))))
+          (apply #'regolith/agent-shell-new-with-purpose start args)))))
+  (defun regolith/agent-shell-manager-remember-directory (&rest _)
+    "Remember the project directory when opening the manager."
+    (unless (derived-mode-p 'agent-shell-manager-mode)
+      (setq regolith/agent-shell-manager-directory default-directory)))
   :custom
+  ;; Only consider agents that we have installed, not the ones that
+  ;; are available for download.
+  (agent-shell-agent-configs
+   (lambda ()
+     (seq-filter
+      (lambda (maker)
+        (when-let* ((config (funcall maker))
+                    (client-maker (map-elt config :client-maker))
+                    (client (ignore-errors
+                              (funcall client-maker (current-buffer))))
+                    (command (map-elt client :command)))
+          (executable-find command)))
+      (agent-shell-default-agent-config-makers))))
+  ;; Don't want downloads-shell or temp-shell
+  (agent-shell-session-choices-function
+   (lambda (choices)
+     (seq-remove (lambda (choice)
+                   (memq (cdr choice) '(:downloads-shell :temp-shell)))
+                 choices)))
+  (agent-shell-show-cost-indicator t)
+  (agent-shell-show-usage-at-turn-end t)
+  (agent-shell-show-welcome-message nil)
   ;; Already using this in the copilot.el package, but we can also use
   ;; it here for agent-shell rather than the default `copilot` cli
   ;; (which is useful in cases where API-based Copilot calls are
   ;; permitted but CLI is not, such as in some enterprise
   ;; environments).
-  (agent-shell-github-acp-command '("copilot-language-server" "--acp")))
+  (agent-shell-github-acp-command '("copilot-language-server" "--acp"))
+  :config
+  (advice-add 'agent-shell-new-shell :around
+              #'regolith/agent-shell-new-with-purpose)
+  :bind
+  ;; * C-c C-v - Set model.
+  ;; * C-c C-m - Set session mode.
+  ;; * C-c C-t - Set thought level (reasoning effort).
+  ;; * C-<tab> - Cycle session mode.
+  (:map agent-shell-mode-map
+        ("RET" . newline)
+        ("C-c C-c" . shell-maker-submit)
+        ("C-c C-k" . agent-shell-interrupt)))
+
+(use-package agent-shell-manager
+  :vc (:url "https://github.com/jethrokuan/agent-shell-manager")
+  :after agent-shell
+  :bind (("C-c s" . agent-shell-manager-toggle))
+  :custom
+  ;; Explicitly force the manager grid to spawn into the default bottom window slot
+  (agent-shell-manager-side 'top)
+  :config
+  (advice-add 'agent-shell-manager-toggle :before
+              #'regolith/agent-shell-manager-remember-directory)
+  (advice-add 'agent-shell-manager-new :around
+              #'regolith/agent-shell-manager-new))
