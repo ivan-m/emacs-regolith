@@ -81,13 +81,14 @@
 
 (defun regolith/load-work-file (file)
   "If `regolith/work-mode' is non-nil and FILE exists inside `regolith/work-directory',
-load it by calling `load-file'.
+load it by calling `load'.
 
 FILE is a filename (for example \"early-init.el\")."
   (let ((path (expand-file-name file regolith/work-directory)))
     (when (and regolith/work-mode ;; Do this check in case regolith/work-mode becomes a more complex check.
                (file-exists-p path))
-      (load-file path))))
+      ;; t means don't emit a message
+      (load path nil t))))
 
 ;; Explicit package archives set here so that it can be overridden
 ;; later in the init process (for example, in work/early-init.el).
