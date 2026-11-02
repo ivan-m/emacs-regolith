@@ -72,6 +72,7 @@
   (setq no-littering-etc-directory (expand-file-name "emacs-state/etc/" state-dir))
   (setq no-littering-var-directory (expand-file-name "emacs-state/var/" state-dir))
   (setq package-user-dir (expand-file-name "elpa/" no-littering-var-directory))
+  (setq package-gnupghome-dir (expand-file-name "gnupg/" no-littering-var-directory))
   ;; Must be a list, not a string path
   (setq package-vc-selected-packages nil))
 
