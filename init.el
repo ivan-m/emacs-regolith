@@ -247,6 +247,14 @@ If the new path's directories does not exist, create them."
   (tramp-auto-save-directory nil)
   (tramp-persistency-file-name (regolith/no-littering-var-file "tramp/persistency.el")))
 
+(defun regolith/disable-lockfile-on-mounts ()
+  "Disable lockfiles for remote, shared or mounted directories."
+  (when (or (file-remote-p (buffer-file-name))
+            (string-prefix-p "/mnt/\\|/media/\\|/app/" (buffer-file-name)))
+    (setq-local create-lockfiles nil)))
+
+(add-hook 'find-file-hook 'regolith/disable-lockfile-on-mounts)
+
 (use-package dired
   :ensure nil
   :custom
