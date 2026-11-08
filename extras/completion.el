@@ -6,6 +6,9 @@
 ;;;
 ;;; Cleaner interface, focussing on minibuffer and completion.
 
+;; Test with:
+;; `emacs --batch -l tests/completion-tests.el -f ert-run-tests-batch-and-exit`
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;;   Basic/inbuilt values
@@ -375,6 +378,8 @@ For file names, only the last path component is considered."
   :custom
   (completion-styles '(orderless-with-prefix basic))
   (completion-category-defaults nil) ; don't let per-category defaults bypass our style
+  ;; Line and location searches should match contiguous text, not flex matches.
+  (completion-category-overrides '((consult-location (styles orderless basic))))
   (completion-ignore-case t)
   (read-buffer-completion-ignore-case t)
   (read-file-name-completion-ignore-case t)
