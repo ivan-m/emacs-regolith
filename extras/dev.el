@@ -629,8 +629,9 @@ prevent network latency issues."
 
 (use-package copilot
   :ensure t
-  :after
-  (embark project) ;; Internally depends upon project
+  ;;:after
+  ;;(embark project) ;; Internally depends upon project
+  :defer 60 ;; Wait 60 seconds before starting copilot, to avoid it being too aggressive in some cases.
   :custom
   ;; https://github.com/copilot-emacs/copilot.el/issues/473
   (copilot-chat-model "auto")
@@ -776,6 +777,7 @@ universal-prefix representation (4) to force a new shell."
 (use-package agent-shell-manager
   :vc (:url "https://github.com/jethrokuan/agent-shell-manager")
   :after agent-shell
+  :demand t ;; Can't use :ensure as this isn't on MELPA yet, so we need to load it immediately after agent-shell
   :bind (("C-c s" . agent-shell-manager-toggle))
   :custom
   ;; Explicitly force the manager grid to spawn into the default bottom window slot
