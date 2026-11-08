@@ -692,26 +692,11 @@ prevent network latency issues."
   (:map copilot-chat-mode-map
         ("C-c c" . copilot-menu)))
 
-;; Configure gptel with use-package, using GitHub Copilot as the model for responses
-(use-package gptel
-  :ensure nil ;; Don't install
-  :if nil
-  ;; Having this here as a snippet for now as a starting
-  ;; point, but it appears to be completely wrong.
-  :custom
-  (gptel-model "github-copilot")
-  (gptel-chat-buffer-name "*GPTel Chat*")
-  :bind
-  (:map gptel-chat-mode-map
-        ("C-c C-s" . gptel-chat-send-region)
-        ("C-c C-f" . gptel-chat-send-file)))
-
 (use-package agent-shell
   :ensure t
+  :demand t ;; Ensure we can launch agent-shells via agent-shell-manager ASAP
   :init
   (require 'cl-lib)
-  (defvar regolith/agent-shell-manager-directory nil
-    "Project directory from which the agent-shell manager was opened.")
   (defun regolith/agent-shell-new-with-purpose (start &rest args)
     "Prompt for a purpose before calling START to create a new agent shell.
 An empty purpose keeps `agent-shell' buffer naming unchanged."
@@ -726,23 +711,6 @@ An empty purpose keeps `agent-shell' buffer naming unchanged."
                     (let ((agent-shell-buffer-name-format original-format))
                       (agent-shell--format-buffer-name agent-name purpose))))))
           (apply start args)))))
-  (defun regolith/agent-shell-manager-new (start &rest args)
-    "Prompt for a purpose and make START reliably create a new shell.
-The manager passes t to `agent-shell', but `agent-shell' expects the
-universal-prefix representation (4) to force a new shell."
-    (let ((agent-shell-function (symbol-function 'agent-shell)))
-      (let ((default-directory
-             (or regolith/agent-shell-manager-directory default-directory))
-            (agent-shell-context-sources nil))
-        (cl-letf (((symbol-function 'agent-shell)
-                   (lambda (&optional arg)
-                     (funcall agent-shell-function
-                              (if (eq arg t) '(4) arg)))))
-          (apply #'regolith/agent-shell-new-with-purpose start args)))))
-  (defun regolith/agent-shell-manager-remember-directory (&rest _)
-    "Remember the project directory when opening the manager."
-    (unless (derived-mode-p 'agent-shell-manager-mode)
-      (setq regolith/agent-shell-manager-directory default-directory)))
   :custom
   ;; Only consider agents that we have installed, not the ones that
   ;; are available for download.
@@ -772,6 +740,7 @@ universal-prefix representation (4) to force a new shell."
   ;; permitted but CLI is not, such as in some enterprise
   ;; environments).
   (agent-shell-github-acp-command '("copilot-language-server" "--acp"))
+  (agent-shell-github-default-model-id "auto")
   :config
   (advice-add 'agent-shell-new-shell :around
               #'regolith/agent-shell-new-with-purpose)
@@ -790,6 +759,31 @@ universal-prefix representation (4) to force a new shell."
   :after agent-shell
   :demand t ;; Can't use :ensure as this isn't on MELPA yet, so we need to load it immediately after agent-shell
   :bind (("C-c s" . agent-shell-manager-toggle))
+  :init
+  (defvar regolith/agent-shell-manager-directory nil
+    "Project directory from which the agent-shell manager was opened.")
+  (defun regolith/agent-shell-manager-new (start &rest args)
+    "Prompt for a purpose, create a new shell, then hide the manager window.
+The manager passes t to `agent-shell', but `agent-shell' expects the
+universal-prefix representation (4) to force a new shell."
+    (let ((agent-shell-function (symbol-function 'agent-shell)))
+      (let ((default-directory
+             (or regolith/agent-shell-manager-directory default-directory))
+            (agent-shell-context-sources nil))
+        (cl-letf (((symbol-function 'agent-shell)
+                   (lambda (&optional arg)
+                     (funcall agent-shell-function
+                              (if (eq arg t) '(4) arg)))))
+          (prog1
+              (apply #'regolith/agent-shell-new-with-purpose start args)
+            ;; Toggle after successful creation so the manager closes.
+            (when (and (fboundp 'agent-shell-manager-toggle)
+                       (derived-mode-p 'agent-shell-manager-mode))
+              (agent-shell-manager-toggle)))))))
+  (defun regolith/agent-shell-manager-remember-directory (&rest _)
+    "Remember the project directory when opening the manager."
+    (unless (derived-mode-p 'agent-shell-manager-mode)
+      (setq regolith/agent-shell-manager-directory default-directory)))
   :custom
   ;; Explicitly force the manager grid to spawn into the default bottom window slot
   (agent-shell-manager-side 'top)
