@@ -632,6 +632,17 @@ prevent network latency issues."
   ;;:after
   ;;(embark project) ;; Internally depends upon project
   :defer 60 ;; Wait 60 seconds before starting copilot, to avoid it being too aggressive in some cases.
+  :init
+  (defun regolith/copilot-enable-maybe ()
+    "Enable `copilot-mode' unless current buffer is `*scratch*'."
+    (unless (string-equal (buffer-name) "*scratch*")
+      (copilot-mode 1)))
+
+  (defun regolith/copilot-nes-enable-maybe ()
+    "Enable `copilot-nes-mode' unless current buffer is `*scratch*'."
+    (unless (string-equal (buffer-name) "*scratch*")
+      (copilot-nes-mode 1)))
+
   :custom
   ;; https://github.com/copilot-emacs/copilot.el/issues/473
   (copilot-chat-model "auto")
@@ -647,8 +658,8 @@ prevent network latency issues."
         ("C-c c" . copilot-menu))
 
   :hook
-  (prog-mode . copilot-mode)
-  (prog-mode . copilot-nes-mode)
+  (prog-mode . regolith/copilot-enable-maybe)
+  (prog-mode . regolith/copilot-nes-enable-maybe)
 
   :config
   (push 'embark--ignore-target
@@ -659,7 +670,7 @@ prevent network latency issues."
 
 (use-package copilot
   :ensure nil
-  :after minions
+  :after (minions copilot)
   :config
   ;; Add copilot-mode to the existing prominent modes (avoid duplicates).
   (add-to-list 'minions-prominent-modes 'copilot-mode))
