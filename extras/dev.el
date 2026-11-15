@@ -679,18 +679,34 @@ prevent network latency issues."
   :ensure nil
   :after copilot
   :custom
-  ;; Use:
-  ;;   * You
-  ;;   ** Copilot
-  ;; for each exchange.
-  (copilot-chat-frontend 'org)
+  (copilot-chat-frontend 'markdown)
+  ;; This is the default, just emphasising as 'org doesn't have good
+  ;; syntax highlighting for code blocks.
 
   ;; Keep the package's status line.
   (copilot-chat-show-status-header t)
 
   :bind
   (:map copilot-chat-mode-map
-        ("C-c c" . copilot-menu)))
+        ("C-c c" . copilot-menu))
+  :config
+  (defface regolith/copilot-chat-you-face
+    '((t :inherit (diff-removed bold) :height 1.15))
+    "Face for `You:` prompt labels.")
+
+  (defface regolith/copilot-chat-assistant-face
+    '((t :inherit (diff-added bold) :height 1.15))
+    "Face for `Copilot:` prompt labels.")
+  (defun regolith/copilot-chat-speaker-highlighting ()
+    "Emphasise speaker labels in `copilot-chat-mode`."
+    (font-lock-add-keywords
+     nil
+     '(("^\\(You:\\)" 1 'regolith/copilot-chat-you-face prepend)
+       ("^\\(Copilot:\\)" 1 'regolith/copilot-chat-assistant-face prepend))
+     'append))
+
+  :hook
+  (copilot-chat-mode . regolith/copilot-chat-speaker-highlighting))
 
 (use-package agent-shell
   :ensure t
@@ -734,13 +750,6 @@ An empty purpose keeps `agent-shell' buffer naming unchanged."
   (agent-shell-show-cost-indicator t)
   (agent-shell-show-usage-at-turn-end t)
   (agent-shell-show-welcome-message nil)
-  ;; Already using this in the copilot.el package, but we can also use
-  ;; it here for agent-shell rather than the default `copilot` cli
-  ;; (which is useful in cases where API-based Copilot calls are
-  ;; permitted but CLI is not, such as in some enterprise
-  ;; environments).
-  (agent-shell-github-acp-command '("copilot-language-server" "--acp"))
-  (agent-shell-github-default-model-id "auto")
   :config
   (advice-add 'agent-shell-new-shell :around
               #'regolith/agent-shell-new-with-purpose)
@@ -753,6 +762,24 @@ An empty purpose keeps `agent-shell' buffer naming unchanged."
         ("RET" . newline)
         ("C-c C-c" . shell-maker-submit)
         ("C-c C-k" . agent-shell-interrupt)))
+
+;; GitHub Copilot settings
+(use-package agent-shell
+  :ensure nil ;; Already installed
+  :custom
+  ;; Already using this in the copilot.el package, but we can also use
+  ;; it here for agent-shell rather than the default 'copilot' cli
+  ;; (which is useful in cases where API-based Copilot calls are
+  ;; permitted but CLI is not, such as in some enterprise
+  ;; environments).  Agent-shell still seems to want the 'copilot'
+  ;; command installed though.
+  (agent-shell-github-acp-command '("copilot-language-server" "--acp"))
+  (agent-shell-github-default-model-id "auto"))
+
+;; For Claude, this can be configured in '~/.claude/settings.json' and
+;; thus doesn't need to be duplicated here.  Having the tooling
+;; installed means that agent-shell will detect it and thus claude
+;; will be available as a session choice.
 
 (use-package agent-shell-manager
   :vc (:url "https://github.com/jethrokuan/agent-shell-manager")
