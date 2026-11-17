@@ -209,3 +209,10 @@
   (sleek-modeline-suppress-default-mouse nil) ;; Use Emacs mouse menus
   :config
   (sleek-modeline-mode 1))
+
+;; TODO: expand upon this and customise
+(use-package breadcrumb
+  :ensure t
+  :if (display-graphic-p)
+  :config
+  (breadcrumb-mode 1))
