@@ -143,6 +143,10 @@
 (setopt auto-revert-use-notify (system-type-is-gnu)) ;; Mac as well?
 (global-auto-revert-mode)
 
+;; Stop C-z from minimizing emacs.
+(global-unset-key "\C-z")
+(global-unset-key (kbd "C-x C-z"))
+
 ;; Don't litter file system with *~ backup files; put them all inside
 ;; var/backup/, preserving the original directory structure, via
 ;; no-littering's helper.

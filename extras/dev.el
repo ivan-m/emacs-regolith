@@ -725,7 +725,8 @@ prevent network latency issues."
 
 (use-package agent-shell
   :ensure t
-  :demand t ;; Ensure we can launch agent-shells via agent-shell-manager ASAP
+  :demand t
+  :after transient
   :init
   (require 'cl-lib)
   (defun regolith/agent-shell-new-with-purpose (start &rest args)
@@ -768,15 +769,20 @@ An empty purpose keeps `agent-shell' buffer naming unchanged."
   :config
   (advice-add 'agent-shell-new-shell :around
               #'regolith/agent-shell-new-with-purpose)
+  (transient-define-prefix regolith/agent-shell ()
+    "Agent shell commands."
+    [["Agent Shell"
+      ("c" "Create new session" agent-shell-new-shell)]])
   :bind
-  ;; * C-c C-v - Set model.
-  ;; * C-c C-m - Set session mode.
-  ;; * C-c C-t - Set thought level (reasoning effort).
-  ;; * C-<tab> - Cycle session mode.
-  (:map agent-shell-mode-map
-        ("RET" . newline)
-        ("C-c C-c" . shell-maker-submit)
-        ("C-c C-k" . agent-shell-interrupt)))
+  (("C-c s" . regolith/agent-shell)
+   :map agent-shell-mode-map
+   ;; * C-c C-v - Set model.
+   ;; * C-c C-m - Set session mode.
+   ;; * C-c C-t - Set thought level (reasoning effort).
+   ;; * C-<tab> - Cycle session mode.
+   ("RET" . newline)
+   ("C-c C-c" . shell-maker-submit)
+   ("C-c C-k" . agent-shell-interrupt)))
 
 ;; GitHub Copilot settings
 (use-package agent-shell
@@ -796,41 +802,37 @@ An empty purpose keeps `agent-shell' buffer naming unchanged."
 ;; installed means that agent-shell will detect it and thus claude
 ;; will be available as a session choice.
 
-(use-package agent-shell-manager
-  :vc (:url "https://github.com/jethrokuan/agent-shell-manager")
+(use-package agent-shell-consult
+  :ensure t
   :after agent-shell
-  :demand t ;; Can't use :ensure as this isn't on MELPA yet, so we need to load it immediately after agent-shell
-  :bind (("C-c s" . agent-shell-manager-toggle))
-  :init
-  (defvar regolith/agent-shell-manager-directory nil
-    "Project directory from which the agent-shell manager was opened.")
-  (defun regolith/agent-shell-manager-new (start &rest args)
-    "Prompt for a purpose, create a new shell, then hide the manager window.
-The manager passes t to `agent-shell', but `agent-shell' expects the
-universal-prefix representation (4) to force a new shell."
-    (let ((agent-shell-function (symbol-function 'agent-shell)))
-      (let ((default-directory
-             (or regolith/agent-shell-manager-directory default-directory))
-            (agent-shell-context-sources nil))
-        (cl-letf (((symbol-function 'agent-shell)
-                   (lambda (&optional arg)
-                     (funcall agent-shell-function
-                              (if (eq arg t) '(4) arg)))))
-          (prog1
-              (apply #'regolith/agent-shell-new-with-purpose start args)
-            ;; Toggle after successful creation so the manager closes.
-            (when (and (fboundp 'agent-shell-manager-toggle)
-                       (derived-mode-p 'agent-shell-manager-mode))
-              (agent-shell-manager-toggle)))))))
-  (defun regolith/agent-shell-manager-remember-directory (&rest _)
-    "Remember the project directory when opening the manager."
-    (unless (derived-mode-p 'agent-shell-manager-mode)
-      (setq regolith/agent-shell-manager-directory default-directory)))
-  :custom
-  ;; Explicitly force the manager grid to spawn into the default bottom window slot
-  (agent-shell-manager-side 'top)
+  :demand t
   :config
-  (advice-add 'agent-shell-manager-toggle :before
-              #'regolith/agent-shell-manager-remember-directory)
-  (advice-add 'agent-shell-manager-new :around
-              #'regolith/agent-shell-manager-new))
+  (transient-append-suffix 'regolith/agent-shell "c"
+    '("l" "List sessions" agent-shell-consult)))
+
+(use-package agent-shell-attention
+  :ensure t
+  :after agent-shell
+  :demand t
+  :custom
+  (agent-shell-attention-notify-function #'agent-shell-attention-notify-default)
+  (agent-shell-attention-render-function
+   #'agent-shell-attention-render-active)
+  (agent-shell-attention-show-zeros t)
+  :config
+  (transient-append-suffix 'regolith/agent-shell "l"
+    '("a" "Agent attention" agent-shell-attention-jump))
+  (transient-append-suffix 'regolith/agent-shell "a"
+    '("d" "Attention dashboard" agent-shell-attention-dashboard))
+  (when (featurep 'sleek-modeline)
+    (defun regolith/sleek-modeline-agent-shell-attention-segment ()
+      "Return the agent-shell attention indicator for Sleek Modeline."
+      (when agent-shell-attention-mode
+        (agent-shell-attention--indicator)))
+    (sleek-modeline-register-segment 'agent-shell-attention
+                                     :fn 'regolith/sleek-modeline-agent-shell-attention-segment
+                                     :side 'left
+                                     :priority 1
+                                     :separator t)
+    (sleek-modeline-refresh))
+  (agent-shell-attention-mode 1))
