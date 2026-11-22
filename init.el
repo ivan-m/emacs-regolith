@@ -190,6 +190,7 @@ If the new path's directories does not exist, create them."
 
 (use-package emacs
   :ensure nil
+  :after delight
   :delight
   (visual-line-mode)
   (auto-fill-function)

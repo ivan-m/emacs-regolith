@@ -170,6 +170,7 @@
   :functions
   minions-minor-modes-menu
   :config
+  (minions-mode 1)
   ;; Avoid issues with string-match being called on non-strings, which
   ;; results in errors (typically to do with markdown mode for some
   ;; reason).
@@ -203,14 +204,33 @@
 ;; I've disabled above...
 (use-package sleek-modeline
   :ensure t
+  :after minions
   :if (display-graphic-p)
   :custom
   (sleek-modeline-size 'medium)
   (sleek-modeline-suppress-default-mouse nil) ;; Use Emacs mouse menus
   :config
+  (defun regolith/sleek-modeline-minions-segment ()
+    "Return Minions' minor-mode menu for the mode line."
+    (when minions-mode
+      (concat (sleek-modeline--separator)
+              (propertize minions-mode-line-lighter
+                          'face minions-mode-line-face
+                          'mouse-face 'mode-line-highlight
+                          'local-map minions-mode-line-minor-modes-map
+                          'help-echo "Minions\nmouse-1: Display minor modes menu"))))
+  (sleek-modeline-register-segment 'minions
+                                   :fn 'regolith/sleek-modeline-minions-segment
+                                   :side 'right
+                                   :priority 50
+                                   :separator nil) ;; separator will appear on RHS, not LHS
   (sleek-modeline-mode 1))
 
-;; TODO: expand upon this and customise
+;; Get nice header lines with filename and imenu path.
+;;
+;; Might even be worth considering replacing sleek-modeline with
+;; breadcrumb to avoid the extra dependency, but sleek-modeline is
+;; more featureful and has a better look and feel.
 (use-package breadcrumb
   :ensure t
   :if (display-graphic-p)

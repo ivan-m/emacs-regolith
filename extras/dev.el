@@ -596,6 +596,8 @@ prevent network latency issues."
 (use-package apheleia
   :ensure t
   :if (system-type-is-gnu)
+  :custom
+  (apheleia-mode-lighter " ⌘")
   :config
   ;; nixfmt no longer accepts stdin by default
   (setf (alist-get 'nixfmt apheleia-formatters)
@@ -660,6 +662,9 @@ prevent network latency issues."
     (unless (string-equal (buffer-name) "*scratch*")
       (copilot-nes-mode 1)))
 
+  :delight
+  copilot-mode
+  copilot-nes-mode
   :custom
   ;; https://github.com/copilot-emacs/copilot.el/issues/473
   (copilot-chat-model "auto")
@@ -684,13 +689,6 @@ prevent network latency issues."
   ;; This used to be embark-consult-search-map so we might want to change this
   (keymap-set embark-region-map "c" #'copilot-chat-send-region))
 ;; Run copilot-install-server if there are issues, but this doesn't use the system-installed one!
-
-(use-package copilot
-  :ensure nil
-  :after (minions copilot)
-  :config
-  ;; Add copilot-mode to the existing prominent modes (avoid duplicates).
-  (add-to-list 'minions-prominent-modes 'copilot-mode))
 
 (use-package copilot-chat
   :ensure nil

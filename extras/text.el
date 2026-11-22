@@ -141,6 +141,7 @@ without moving point."
 (use-package org-table
   ;; Use the version that ships with Emacs, not the one from ELPA.
   :ensure nil
+  :delight orgtbl-mode
   :config
   (defun regolith/markdown-enable-orgtbl ()
     "Enable orgtbl in this buffer and disable orgtbl's C-c C-c here.
@@ -172,6 +173,7 @@ markdown commands."
 
 (use-package pandoc-mode
   :ensure t
+  :delight
   :hook
   ((markdown-mode . pandoc-mode)
    (pandoc-mode . pandoc-load-default-settings)))
@@ -208,6 +210,7 @@ markdown commands."
   :if (system-type-is-gnu)
   :hook (((text-mode prog-mode) . jinx-mode))
   :bind (("C-;" . jinx-correct))
+  :delight
   :custom
   (jinx-camel-modes '(prog-mode))
   (jinx-delay 0.01))
